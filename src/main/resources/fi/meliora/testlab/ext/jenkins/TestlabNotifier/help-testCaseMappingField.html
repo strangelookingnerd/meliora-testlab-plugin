@@ -1,0 +1,26 @@
+<div>
+    <p>
+        Title of the Testlab's custom field to use to map the test cases to unit test methods.
+    </p>
+    <p>
+        To make it possible to push unit test results from Jenkins to Testlab the
+        unit test class.method name must be mapped to a test case in your Testlab project:
+    </p>
+    <ol>
+        <li>
+            Configure a new "text" custom field to your project at Testlab side. Give
+            the field a human readable title such as "JUnit test".
+        </li>
+        <li>
+            Update your test cases at Testlab side and enter proper JUnit test
+            class+method name pairs for your test cases.
+        </li>
+        <li>
+            Enter "JUnit test" to this field at Jenkins side. This way when
+            unit tests in Jenkins fail they will be mapped to test cases with
+            matching "JUnit test" names at Testlab side. When importing Testlab
+            will peek the set custom field of a test case and if it matches the class.method name
+            of a failed unit test the test case will be marked as failed.
+        </li>
+    </ol>
+</div>

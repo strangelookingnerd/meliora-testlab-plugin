@@ -1,0 +1,90 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <!--
+      This jelly script is used for per-project configuration.
+    -->
+    <f:entry
+            title="Project key"
+            description="Project key of the Testlab project for which to publish to"
+            field="projectKey">
+        <f:textbox clazz="required" />
+    </f:entry>
+
+    <f:entry
+            title="Test run title"
+            description="Name of the Testlab test run to create or update"
+            field="testRunTitle">
+        <f:textbox clazz="required" />
+    </f:entry>
+
+    <f:entry
+            title="Version (Optional)"
+            description="Version in Testlab the results and issues are bound to."
+            field="testTargetTitle">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry
+            title="Environment (Optional)"
+            description="Environment in Testlab the results and issues are bound to."
+            field="testEnvironmentTitle">
+        <f:textbox />
+    </f:entry>
+
+    <f:block>
+        <table>
+            <f:optionalBlock field="issuesSettings" title="Add issues?"
+                             checked="${not empty instance.issuesSettings}"
+                             help="/plugin/meliora-testlab/help-addIssues.html">
+
+                <f:entry
+                        title="Add issues as a single merged issue?"
+                        description="If checked added issues are merged to a single issue per job run."
+                        field="mergeAsSingleIssue">
+                    <f:checkbox checked="${h.defaultToTrue(instance.issuesSettings.mergeAsSingleIssue)}"/>
+                </f:entry>
+
+                <f:entry
+                        title="Reopen existing issues?"
+                        description="If set the plugin tries to reopen matching issues found in the project."
+                        field="reopenExisting">
+                    <f:checkbox />
+                </f:entry>
+
+                <f:entry
+                        title="Assign to user"
+                        description="If set the added issues are automatically assigned to this user in the set project."
+                        field="assignToUser">
+                    <f:textbox />
+                </f:entry>
+
+            </f:optionalBlock>
+        </table>
+    </f:block>
+
+    <f:block>
+        <table>
+            <f:optionalBlock field="advancedSettings" title="Advanced settings"
+                             checked="${not empty instance.advancedSettings}">
+
+                <f:entry title="Company ID"
+                         description="Company identifier of target Testlab. Overrides default setting set in Manage Jenkins > Configure System."
+                         field="companyId">
+                    <f:textbox clazz="required" />
+                </f:entry>
+
+                <f:entry title="Testlab API key"
+                         description="Testlab API key to use for security. Overrides default setting set in Manage Jenkins > Configure System."
+                         field="apiKey">
+                    <f:textbox clazz="required" />
+                </f:entry>
+
+                <f:entry title="Test case mapping field"
+                         description="Title of the Testlab custom field to use to map the unit tests to Testlab's test cases. Overrides default setting set in Manage Jenkins > Configure System."
+                         field="testCaseMappingField">
+                    <f:textbox clazz="required" />
+                </f:entry>
+
+            </f:optionalBlock>
+        </table>
+    </f:block>
+</j:jelly>

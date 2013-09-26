@@ -1,0 +1,6 @@
+<!--
+  This is shown in manage plugins - plugin listing.
+-->
+<div>
+    Publishes results of automated tests to Meliora Testlab.
+</div>

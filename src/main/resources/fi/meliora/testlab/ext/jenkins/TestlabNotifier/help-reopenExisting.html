@@ -1,0 +1,24 @@
+<div>
+    <p>
+        The plugin will create the issues with the title set to the name of the failing
+        test class. When this setting is set the plugin tries to
+        reopen existing issues in the project by matching the issue's title.
+    </p>
+    <p>
+        When finding existing issues if
+    </p>
+    <ul>
+        <li>a single resolved or closed issue is found it is reopened and updated,</li>
+        <li>a single still non-resolved issue is found it is updated,</li>
+        <li>multiple issues are found and the latest issue is resolved or closed it is reopened and updated,</li>
+        <li>multiple issues are found and the latest issue is still non-resolved it is updated.</li>
+    </ul>
+    <p>
+        Otherwise a new issue is added.
+    </p>
+    <p>
+        When reopening an issue version, environment, description and assigned to -fields are
+        updated to match the Jenkins sent values. When updating a found non-resolved issue
+        only description is updated to Jenkins sent value.
+    </p>
+</div>

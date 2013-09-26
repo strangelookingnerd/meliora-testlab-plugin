@@ -1,0 +1,88 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <!-- which version of Jenkins is this plugin built against? -->
+        <version>1.480</version>
+    </parent>
+
+    <artifactId>meliora-testlab</artifactId>
+    <version>1.0</version>
+    <packaging>hpi</packaging>
+    <description>Publishes results of automated tests to Meliora Testlab</description>
+    <url>http://wiki.jenkins-ci.org/display/JENKINS/Meliora+Testlab+Plugin</url>
+
+    <licenses>
+        <license>
+            <name>LGPL license version 3</name>
+            <comments>All source code is under the LGPLv3 license.</comments>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:ssh://github.com/jenkinsci/meliora-testlab-plugin.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/meliora-testlab-plugin.git</developerConnection>
+        <url>https://github.com/jenkinsci/meliora-testlab-plugin</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>meliora</id>
+            <email>marko.kanala@meliora.fi</email>
+            <name>Marko Kanala</name>
+            <organization>Meliora Ltd</organization>
+            <organizationUrl>https://www.melioratestlab.com</organizationUrl>
+            <timezone>Europe/Helsinki</timezone>
+        </developer>
+    </developers>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.codegist.crest</groupId>
+            <artifactId>codegist-crest</artifactId>
+            <version>2.0.0-RC1</version>
+            <classifier>all</classifier>
+        </dependency>
+        <dependency>
+            <groupId>org.codehaus.jackson</groupId>
+            <artifactId>jackson-mapper-asl</artifactId>
+            <version>1.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.ws.rs</groupId>
+            <artifactId>jsr311-api</artifactId>
+            <version>1.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>1.6.4</version>
+        </dependency>
+    </dependencies>
+
+</project>

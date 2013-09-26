@@ -1,0 +1,35 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <!--
+      This Jelly script is used to produce the global configuration option.
+
+      Hudson uses a set of tag libraries to provide uniformity in forms.
+      To determine where this tag is defined, first check the namespace URI,
+      and then look under $HUDSON/views/. For example, <f:section> is defined
+      in $HUDSON/views/lib/form/section.jelly.
+
+      It's also often useful to just check other similar scripts to see what
+      tags they use. Views are always organized according to its owner class,
+      so it should be straightforward to find them.
+    -->
+    <f:section title="Meliora Testlab publisher" help="">
+
+        <f:entry title="Company ID"
+                 description="Company identifier of your Testlab"
+                 field="companyId">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Testlab API key"
+                 description="Testlab API key to use for security"
+                 field="apiKey">
+            <f:textbox/>
+        </f:entry>
+
+        <f:entry title="Test case mapping field"
+                 description="Title of the Testlab custom field to use to map the unit tests to Testlab's test cases"
+                 field="testCaseMappingField">
+            <f:textbox/>
+        </f:entry>
+
+    </f:section>
+</j:jelly>
