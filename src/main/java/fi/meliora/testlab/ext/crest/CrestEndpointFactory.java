@@ -49,23 +49,44 @@ public class CrestEndpointFactory {
     /**
      * Returns an endpoint to Testlab.
      *
-     * This methods peeks for TESTLAB_<companyid in upper case> system environment
-     * variable for testlab api address. If none is set a default of https://companyid.melioratestlab.com/api
-     * is used.
+     * If onpremiseUrl is set it used as a base url. It not, this methods peeks for
+     * TESTLAB_<companyid in upper case> system environment variable for testlab api address.
+     * If none is set a default of https://companyid.melioratestlab.com/api is used.
      *
      * @param companyId
+     * @parma onpremiseUrl
      * @param apiKey
      * @param endpointClass
      * @param <T>
      * @return
      */
-    public <T>T getTestlabEndpoint(String companyId, String apiKey, Class<T> endpointClass) {
-        String url = System.getProperty(
-                "TESTLAB_" + companyId.toUpperCase(),
-                "https://" + companyId.toLowerCase() + ".melioratestlab.com/api"
-        );
-        if(log.isDebugEnabled())
-            log.debug("Using url {} as testlab endpoint.", url);
+    public <T>T getTestlabEndpoint(String companyId, String onpremiseUrl, String apiKey, Class<T> endpointClass) {
+        String url;
+        if(onpremiseUrl != null && onpremiseUrl.trim().length() > 0) {
+            // on-premise testlab
+            StringBuilder sb = new StringBuilder();
+            sb.append(onpremiseUrl);
+            if(!onpremiseUrl.endsWith("/")) {
+                sb.append('/');
+            }
+            sb.append("api");
+            url = sb.toString();
+            // force company id as "company" for calls to on-premise installations
+            companyId = "company";
+
+            if(log.isDebugEnabled())
+                log.debug("Using on-premise url {} as testlab endpoint.", url);
+        } else {
+            // hosted testlab
+            url = System.getProperty(
+                    "TESTLAB_" + companyId.toUpperCase(),
+                    "https://" + companyId.toLowerCase() + ".melioratestlab.com/api"
+            );
+
+            if(log.isDebugEnabled())
+                log.debug("Using hosted url {} as testlab endpoint.", url);
+        }
+
         return getEndpoint(url, companyId, apiKey, endpointClass);
     }
 

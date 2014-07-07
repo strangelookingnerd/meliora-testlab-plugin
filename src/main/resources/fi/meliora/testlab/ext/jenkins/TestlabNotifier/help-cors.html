@@ -2,7 +2,7 @@
     <p>
         If your Jenkins is using security (which it should) and you'd prefer to your
         Testlab users to be able to use Jenkins Jobs widget to see Jenkins' jobs and
-        build them, you should enable this option and setup the origin domain.
+        build them, you should enable this option and setup the origin domain(s).
     </p>
     <p>
         When enabling this setting:
@@ -19,10 +19,12 @@
             </i>
         </li>
         <li>
-            You should configure the Origin setting to a full URL origin address of your
+            You should configure the Origins setting to a full URL origin address of your
             Testlab such as 'http://mytestlab.melioratestlab.com'. This restricts the
-            CORS calls to only be allowed from this host. If set to a wildcard value '*'
-            the calls will work but the CORS calls will be allowed from any domain.
+            CORS calls to only be allowed from this host. If you need to set multiple values
+            separate values with a comma. If set to a wildcard value '*'
+            the calls will work but the CORS calls will be allowed from any domain which
+            is not recommended for security reasons.
         </li>
     </ul>
 </div>

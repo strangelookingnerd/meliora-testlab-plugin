@@ -7,11 +7,16 @@ import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
 import hudson.tasks.*;
+import hudson.util.PluginServletFilter;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.servlet.ServletException;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * A post build action to publish test results to Meliora Testlab.
@@ -19,6 +24,7 @@ import java.io.IOException;
  * @author Marko Kanala, Meliora Ltd
  */
 public class TestlabNotifier extends Notifier {
+    private final static Logger log = Logger.getLogger(TestlabNotifier.class.getName());
 
     /*
         BuildSteps that run after the build is completed.
@@ -114,6 +120,13 @@ public class TestlabNotifier extends Notifier {
         return testCaseMappingField;
     }
 
+    // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
+    private Usingonpremise usingonpremise;
+
+    public Usingonpremise getUsingonpremise() {
+        return usingonpremise;
+    }
+
     /**
      * This annotation tells Hudson to call this constructor, with
      * values from the configuration form page with matching parameter names.
@@ -137,6 +150,7 @@ public class TestlabNotifier extends Notifier {
             this.companyId = advancedSettings.getCompanyId();
             this.apiKey = advancedSettings.getApiKey();
             this.testCaseMappingField = advancedSettings.getTestCaseMappingField();
+            this.usingonpremise = advancedSettings.getUsingonpremise();
         }
     }
 
@@ -202,14 +216,44 @@ public class TestlabNotifier extends Notifier {
 
         DescriptorImpl d = getDescriptor();
 
+        log.fine("perform(): " + this + ", descriptor: " + d);
+
         // get job specific settings if any and fallback to global configuration
-        String runCompanyId = isBlank(companyId) ? d.getCompanyId() : companyId;
         String runApiKey = isBlank(apiKey) ? d.getApiKey() : apiKey;
         String runTestCaseMappingField = isBlank(testCaseMappingField) ? d.getTestCaseMappingField() : testCaseMappingField;
 
+        Usingonpremise uop = advancedSettings != null && advancedSettings.getUsingonpremise() != null
+                ? advancedSettings.getUsingonpremise() : d.getUsingonpremise();
+
+        String runCompanyId = null, runOnpremiseurl = null;
+        boolean runUsingonpremise = false;
+
+        if(uop != null && !isBlank(uop.getOnpremiseurl())) {
+            //
+            // we apply onpremise settings only if they are complete
+            //
+            runCompanyId = null;
+            runUsingonpremise = true;
+            runOnpremiseurl = uop.getOnpremiseurl();
+
+            log.fine("using on-premise with url: " + runOnpremiseurl);
+
+        } else {
+            //
+            // otherwise we use companyId if present
+            //
+            runCompanyId = !isBlank(companyId) ? companyId : d.getCompanyId();
+
+            log.fine("using hosted with company id: " + runCompanyId);
+        }
+
         String abortError = null;
-        if(isBlank(runCompanyId)) {
+        if(!runUsingonpremise && isBlank(runCompanyId)) {
             abortError = "Could not publish results to Testlab: Company ID is not set. Configure it for your job or globally in Jenkins' configuration.";
+        }
+
+        if(runUsingonpremise && isBlank(runOnpremiseurl)) {
+            abortError = "Could not publish results to Testlab: Testlab URL for on-premise Testlab is not set. Configure it for your job or globally in Jenkins' configuration.";
         }
 
         if(isBlank(runApiKey)) {
@@ -235,6 +279,8 @@ public class TestlabNotifier extends Notifier {
 
         Sender.sendResults(
                 runCompanyId,
+                runUsingonpremise,
+                runOnpremiseurl,
                 runApiKey,
                 projectKey,
                 testRunTitle,
@@ -266,9 +312,29 @@ public class TestlabNotifier extends Notifier {
         private String apiKey;
         // custom field name to map the test ids against with
         private String testCaseMappingField;
+        // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
+        private Usingonpremise usingonpremise;
+        // defines CORS settings for calls from Testlab -> Jenkins API
+        private Cors cors;
+
+        private CORSFilter CORSFilter;
 
         public DescriptorImpl() {
             load();
+
+            log.fine("load: " + companyId + ", api key hidden, " + testCaseMappingField + ", " + usingonpremise + ", " + usingonpremise + ", " + cors);
+
+            // let's inject our CORSFilter as we're at it
+            try {
+                CORSFilter = new CORSFilter();
+                PluginServletFilter.addFilter(CORSFilter);
+                log.info("CORSFilter injected.");
+            } catch (ServletException se) {
+                log.warning("Could not inject CORSFilter.");
+                se.printStackTrace();
+            }
+
+            configureCORS();
         }
 
         /**
@@ -293,8 +359,43 @@ public class TestlabNotifier extends Notifier {
             companyId = json.getString("companyId");
             apiKey = json.getString("apiKey");
             testCaseMappingField = json.getString("testCaseMappingField");
+
+            JSONObject uop = json.getJSONObject("usingonpremise");
+            if(uop != null && !uop.isNullObject() && !uop.isEmpty()) {
+                usingonpremise = new Usingonpremise(uop.getString("onpremiseurl"));
+            } else {
+                usingonpremise = null;
+            }
+
+            JSONObject c = json.getJSONObject("cors");
+            if(c != null && !c.isNullObject() && !c.isEmpty()) {
+                cors = new Cors(c.getString("origin"));
+            } else {
+                cors = null;
+            }
+
+            log.fine("configure: " + companyId + ", api key hidden, " + testCaseMappingField + ", " + usingonpremise + ", " + cors);
+
             save();
+
+            configureCORS();
+
             return true; // indicate that everything is good so far
+        }
+
+        protected void configureCORS() {
+            CORSFilter.setEnabled(cors != null && !isBlank(cors.getOrigin()));
+            if(cors != null && cors.getOrigin() != null) {
+                //
+                // parse a comma separated list to a list of allowed origins
+                //
+                String[] spl = cors.getOrigin().split(",");
+                List<String> origins = new ArrayList<String>();
+                for(String o : spl) {
+                    origins.add(o.trim());
+                }
+                CORSFilter.setOrigins(origins);
+            }
         }
 
         public String getCompanyId() {
@@ -307,6 +408,25 @@ public class TestlabNotifier extends Notifier {
 
         public String getTestCaseMappingField() {
             return testCaseMappingField;
+        }
+
+        public Usingonpremise getUsingonpremise() {
+            return usingonpremise;
+        }
+
+        public Cors getCors() {
+            return cors;
+        }
+
+        @Override
+        public String toString() {
+            return "DescriptorImpl{" +
+                    "companyId='" + companyId + '\'' +
+                    ", apiKey='hidden'" +
+                    ", testCaseMappingField='" + testCaseMappingField + '\'' +
+                    ", usingonpremise=" + usingonpremise +
+                    ", cors=" + cors +
+                    '}';
         }
     }
 
@@ -335,13 +455,54 @@ public class TestlabNotifier extends Notifier {
             return testCaseMappingField;
         }
 
+        // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
+        private Usingonpremise usingonpremise;
+
+        public Usingonpremise getUsingonpremise() {
+            return usingonpremise;
+        }
+
         @DataBoundConstructor
-        public AdvancedSettings(String companyId, String apiKey, String testCaseMappingField) {
+        public AdvancedSettings(String companyId, String apiKey, String testCaseMappingField, Usingonpremise usingonpremise) {
             this.companyId = companyId;
             this.apiKey = apiKey;
             this.testCaseMappingField = testCaseMappingField;
+            this.usingonpremise = usingonpremise;
         }
 
+        @Override
+        public String toString() {
+            return "AdvancedSettings{" +
+                    "companyId='" + companyId + '\'' +
+                    ", apiKey='hidden'" +
+                    ", testCaseMappingField='" + testCaseMappingField + '\'' +
+                    ", usingonpremise=" + usingonpremise +
+                    '}';
+        }
+    }
+
+    /**
+     * Optional job config block for on-premise settings.
+     */
+    public static final class Usingonpremise {
+        // full url address of on-premise Testlab
+        private String onpremiseurl;
+
+        public String getOnpremiseurl() {
+            return onpremiseurl;
+        }
+
+        @DataBoundConstructor
+        public Usingonpremise(String onpremiseurl) {
+            this.onpremiseurl = onpremiseurl;
+        }
+
+        @Override
+        public String toString() {
+            return "Usingonpremise{" +
+                    "onpremiseurl='" + onpremiseurl + '\'' +
+                    '}';
+        }
     }
 
     /**
@@ -377,6 +538,39 @@ public class TestlabNotifier extends Notifier {
             this.assignToUser = assignToUser;
             this.reopenExisting = reopenExisting;
         }
+
+        @Override
+        public String toString() {
+            return "IssuesSettings{" +
+                    "mergeAsSingleIssue=" + mergeAsSingleIssue +
+                    ", assignToUser='" + assignToUser + '\'' +
+                    ", reopenExisting=" + reopenExisting +
+                    '}';
+        }
+    }
+
+    /**
+     * Optional config block for CORS settings.
+     */
+    public static final class Cors {
+        // allow origin
+        private String origin;
+
+        public String getOrigin() {
+            return origin;
+        }
+
+        @DataBoundConstructor
+        public Cors(String origin) {
+            this.origin = origin;
+        }
+
+        @Override
+        public String toString() {
+            return "Cors{" +
+                    "origin='" + origin + '\'' +
+                    '}';
+        }
     }
 
     /**
@@ -386,4 +580,22 @@ public class TestlabNotifier extends Notifier {
         return s == null || s.trim().length() == 0;
     }
 
+    @Override
+    public String toString() {
+        return "TestlabNotifier{" +
+                "projectKey='" + projectKey + '\'' +
+                ", testRunTitle='" + testRunTitle + '\'' +
+                ", testTargetTitle='" + testTargetTitle + '\'' +
+                ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +
+                ", issuesSettings=" + issuesSettings +
+                ", mergeAsSingleIssue=" + mergeAsSingleIssue +
+                ", assignToUser='" + assignToUser + '\'' +
+                ", reopenExisting=" + reopenExisting +
+                ", advancedSettings=" + advancedSettings +
+                ", companyId='" + companyId + '\'' +
+                ", apiKey='hidden'" +
+                ", testCaseMappingField='" + testCaseMappingField + '\'' +
+                ", usingonpremise=" + usingonpremise +
+                '}';
+    }
 }

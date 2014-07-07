@@ -2,5 +2,6 @@
   This is shown in manage plugins - plugin listing.
 -->
 <div>
-    Publishes results of automated tests to Meliora Testlab.
+    Publishes results of automated tests to Meliora Testlab, and optionally, injects
+    needed CORS response headers for allowing Testlab -> Jenkins API calls.
 </div>

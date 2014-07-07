@@ -33,16 +33,28 @@ public class SettingsTest extends TestBase {
         HtmlForm form = configureSystemPage.getFormByName("config");
 
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        HtmlCheckBoxInput corsInput = form.getInputByName(FIELD_CORS);
+        HtmlTextInput originsInput = form.getInputByName(FIELD_ORIGIN);
 
         assertEmpty(companyIdInput);
+        assertChecked(usingonpremiseInput, false);
+        assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
+        assertChecked(corsInput, false);
+        assertHasValue(originsInput, "*");
 
         companyIdInput.setValueAttribute("unittestcompany");
+        usingonpremiseInput.setChecked(true);
+        onpremiseurlInput.setValueAttribute("https://unittesthost:8080");
         apiKeyInput.setValueAttribute("1010101010202020");
         testCaseMappingFieldInput.setValueAttribute("Some field");
+        corsInput.setChecked(true);
+        originsInput.setValueAttribute("http://somehost, http://anotherhost");
 
         j.submit(form);
 
@@ -50,12 +62,20 @@ public class SettingsTest extends TestBase {
         form = configureSystemPage.getFormByName("config");
 
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        corsInput = form.getInputByName(FIELD_CORS);
+        originsInput = form.getInputByName(FIELD_ORIGIN);
 
         assertHasValue(companyIdInput, "unittestcompany");
+        assertChecked(usingonpremiseInput, true);
+        assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
         assertHasValue(apiKeyInput, "1010101010202020");
         assertHasValue(testCaseMappingFieldInput, "Some field");
+        assertChecked(corsInput, true);
+        assertHasValue(originsInput, "http://somehost, http://anotherhost");
     }
 
     /**
@@ -99,6 +119,8 @@ public class SettingsTest extends TestBase {
         HtmlTextInput assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
         HtmlCheckBoxInput advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
 
@@ -114,6 +136,8 @@ public class SettingsTest extends TestBase {
 
         assertChecked(advancedSettingsInput, false);
         assertEmpty(companyIdInput);
+        assertChecked(usingonpremiseInput, false);
+        assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
 
@@ -135,6 +159,8 @@ public class SettingsTest extends TestBase {
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
 
@@ -150,6 +176,8 @@ public class SettingsTest extends TestBase {
 
         assertChecked(advancedSettingsInput, false);
         assertEmpty(companyIdInput);
+        assertChecked(usingonpremiseInput, false);
+        assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
 
@@ -175,6 +203,8 @@ public class SettingsTest extends TestBase {
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
 
@@ -197,6 +227,8 @@ public class SettingsTest extends TestBase {
 
         advancedSettingsInput.setChecked(true);
         companyIdInput.setValueAttribute("unittestcompanyjob");
+        usingonpremiseInput.setChecked(true);
+        onpremiseurlInput.setValueAttribute("https://unittesthost:8080");
         apiKeyInput.setValueAttribute("1010101010303030");
         testCaseMappingFieldInput.setValueAttribute("Other field");
         j.submit(form);
@@ -213,6 +245,8 @@ public class SettingsTest extends TestBase {
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
+        usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
+        onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
 
@@ -228,6 +262,8 @@ public class SettingsTest extends TestBase {
 
         assertChecked(advancedSettingsInput, true);
         assertHasValue(companyIdInput, "unittestcompanyjob");
+        assertChecked(usingonpremiseInput, true);
+        assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
         assertHasValue(apiKeyInput, "1010101010303030");
         assertHasValue(testCaseMappingFieldInput, "Other field");
     }

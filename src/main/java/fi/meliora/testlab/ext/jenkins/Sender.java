@@ -44,6 +44,8 @@ public class Sender {
      * Does the actual sending of results to Testlab. Called from appropriate Jenkins extension point.
      *
      * @param companyId
+     * @param usingonpremise
+     * @param onpremiseurl
      * @param apiKey
      * @param projectKey
      * @param testRunTitle
@@ -56,11 +58,11 @@ public class Sender {
      * @param testCaseMappingField
      * @param build
      */
-    public static void sendResults(String companyId, String apiKey, String projectKey, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
+    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", api key hidden, " + projectKey + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
 
         // parse test results
         AbstractTestResultAction ra = build.getTestResultAction();
@@ -95,7 +97,7 @@ public class Sender {
                 try {
                     jenkinsUrl = Jenkins.getInstance().getRootUrlFromRequest();
                 } catch (Exception e) {
-                    // note: this throws fails when run in unit test with JenkinsRule
+                    // note: this fails when run in unit test with JenkinsRule - ignore
                 }
             }
             if(TestlabNotifier.isBlank(jenkinsUrl)) {
@@ -103,7 +105,7 @@ public class Sender {
                 try {
                     comment.append(build.getAbsoluteUrl());
                 } catch (Exception e) {
-                    // note: this throws fails when run in unit test with JenkinsRule
+                    // note: this fails when run in unit test with JenkinsRule - ignore
                 }
             } else {
                 comment.append(jenkinsUrl);
@@ -189,8 +191,9 @@ public class Sender {
                 data.setResults(results);
 
                 // send results to testlab
+                String onpremiseUrl = usingonpremise ? onpremiseurl : null;
                 AddTestResultResponse response = CrestEndpointFactory.getInstance().getTestlabEndpoint(
-                        companyId, apiKey, TestResultResource.class
+                        companyId, onpremiseUrl, apiKey, TestResultResource.class
                 ).addTestResult(data);
 
                 if(log.isLoggable(Level.INFO))

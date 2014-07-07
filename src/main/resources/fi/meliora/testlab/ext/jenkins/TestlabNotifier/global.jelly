@@ -14,10 +14,21 @@
     <f:section title="Meliora Testlab publisher" help="">
 
         <f:entry title="Company ID"
-                 description="Company identifier of your Testlab"
+                 description="Company identifier of your hosted Testlab"
                  field="companyId">
             <f:textbox/>
         </f:entry>
+
+        <f:optionalBlock field="usingonpremise" title="I'm using Testlab On-premise"
+                         checked="${not empty instance.usingonpremise}">
+            <f:entry
+                    title="Testlab URL"
+                    description="Full URL (scheme, host name &amp; domain + optionally port) of your Testlab on-premise server, for example 'https://testlab.mycompany.com'."
+                    field="onpremiseurl"
+                    >
+                <f:textbox value="${instance.usingonpremise.onpremiseurl}"/>
+            </f:entry>
+        </f:optionalBlock>
 
         <f:entry title="Testlab API key"
                  description="Testlab API key to use for security"
@@ -30,6 +41,17 @@
                  field="testCaseMappingField">
             <f:textbox/>
         </f:entry>
+
+        <f:optionalBlock field="cors" title="Allow remote calls from Testlab"
+                         checked="${not empty instance.cors}">
+            <f:entry
+                    title="Origins"
+                    description="Set the value to the url or urls of your Testlab (such as 'http://mytestlab.melioratestlab.com' or 'https://mytestlab.mydomain.com') to restrict cross origin remote calls only from desired hosts. Separate multiple values with a comma."
+                    field="origin"
+                    >
+                <f:textbox value="${instance.cors.origin}" default="*"/>
+            </f:entry>
+        </f:optionalBlock>
 
     </f:section>
 </j:jelly>

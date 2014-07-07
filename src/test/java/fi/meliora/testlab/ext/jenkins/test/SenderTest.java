@@ -33,30 +33,48 @@ public class SenderTest extends TestBase {
      *     <li>asserts that build console log contains a note about successful publish</li>
      * </ul>
      *
-     * This test is skipped if COMPANYID, APIKEY or TESTLABAPI environment parameters are missing.
+     * This test is skipped if COMPANYID, TESTLABPROJECT, APIKEY or TESTLABAPI or alternatively, TESTLABURL environment parameter(s) are missing.
      *
      * @throws Exception
      */
     @Test
     public void testSender() throws Exception {
         // check if we have proper vars to run this test
-        String TEST_COMPANYID = System.getProperty("COMPANYID");
         String TEST_APIKEY = System.getProperty("APIKEY");
+
+        String TEST_COMPANYID = System.getProperty("COMPANYID");
         String TEST_TESTLABAPI = System.getProperty("TESTLABAPI");
-        if(TEST_COMPANYID == null || TEST_APIKEY == null || TEST_TESTLABAPI == null) {
+
+        String TEST_TESTLABURL = System.getProperty("TESTLABURL");
+
+        boolean hasConnectionParameters = TEST_TESTLABURL != null || (TEST_COMPANYID != null && TEST_TESTLABAPI != null);
+        if(TEST_APIKEY == null || !hasConnectionParameters) {
             System.out.println("Skipping test " + getClass() + " as we have no enough params to run this test.");
             return;
         }
 
-        System.setProperty("TESTLAB_" + TEST_COMPANYID.toUpperCase(), TEST_TESTLABAPI);
+        //// setup connection parameters
+
+        if(TEST_TESTLABURL == null)
+            System.setProperty("TESTLAB_" + TEST_COMPANYID.toUpperCase(), TEST_TESTLABAPI);
+
+        TestlabNotifier.AdvancedSettings advancedSettings;
+        if(TEST_TESTLABURL != null) {
+            TestlabNotifier.Usingonpremise usingonpremise = new TestlabNotifier.Usingonpremise(TEST_TESTLABURL);
+            advancedSettings = new TestlabNotifier.AdvancedSettings(null, TEST_APIKEY, "Automated", usingonpremise);
+        } else {
+            advancedSettings = new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, TEST_APIKEY, "Automated", null);
+        }
 
         //// setup a new project and build it
 
         FreeStyleProject p = j.createFreeStyleProject("test");
 
         // add a Shell builder which copies the testproject to the workspace
-        // TODO: fix platform dependency in this test
-        String testProjectPath = new File(getClass().getClassLoader().getResource("testproject").toURI()).getAbsolutePath();
+        // TODO: should fix platform dependency in this test
+        String testProjectPath = new File(
+                getClass().getClassLoader().getResource("testproject").toURI()
+        ).getAbsolutePath();
         String script = TESTPROJECT_INSTALL_SCRIPT.replace("{0}", testProjectPath);
         p.getBuildersList().add(new Shell(script));
 
@@ -70,12 +88,12 @@ public class SenderTest extends TestBase {
         // register our plugin
         p.getPublishersList().add(
                 new TestlabNotifier(
-                        "ATM",
+                        "TLABDEMO",
                         "Jenkins plugin unit test run",
                         "unit test version",
                         "unit test jenkins",
                         null,
-                        new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, TEST_APIKEY, "Test class")
+                        advancedSettings
                 )
         );
 
@@ -86,12 +104,9 @@ public class SenderTest extends TestBase {
         // build completed
 
         String log = FileUtils.readFileToString(build.getLogFile());
-
-        System.out.println("log is:\n\n" + log + "\n\n");
-
         assertTrue(
                 "log file did not report a successful publish.",
-                log.contains("Publishing test results to Testlab project: ATM\nFinished: FAILURE")
+                log.contains("Publishing test results to Testlab project: TLABDEMO\nFinished: FAILURE")
         );
     }
 

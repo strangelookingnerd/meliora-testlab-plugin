@@ -27,24 +27,25 @@ public class ErrorHandler implements org.codegist.crest.handler.ErrorHandler {
 
             if(testlabResponse != null) {
                 // read response
-                Object responseData = getResponseDataIfAny(testlabResponse);
-                if(responseData == null) {
-                    // try to read error
-                    InputStream is = null;
-                    try {
-                        is = testlabResponse.asStream();
-                        if(is != null) {
-                            String charset = testlabResponse.getCharset() != null ? testlabResponse.getCharset().name() : "UTF-8";
-                            Scanner s = new Scanner(is, charset).useDelimiter("\\A");
-                            if(s.hasNext())
-                                responseData = s.next();
-                        }
-                    } catch (Exception ee) {
 
-                    } finally {
-                        if(is != null)
-                            try { is.close(); } catch (Exception eee) {}
+                String responseData = null;
+                // try to read error
+                InputStream is = null;
+                try {
+                    is = testlabResponse.asStream();
+                    if(is != null) {
+                        String charset = testlabResponse.getCharset() != null ? testlabResponse.getCharset().name() : "UTF-8";
+                        Scanner s = new Scanner(is, charset).useDelimiter("\\A");
+                        if(s.hasNext())
+                            responseData = s.next();
                     }
+                    if(responseData != null && responseData.length() > 400)
+                        responseData = responseData.substring(0, 400) + "...";
+                } catch (Exception ee) {
+                    // ...
+                } finally {
+                    if(is != null)
+                        try { is.close(); } catch (Exception eee) {}
                 }
 
                 log.error(
@@ -61,16 +62,10 @@ public class ErrorHandler implements org.codegist.crest.handler.ErrorHandler {
                 }
             }
         }
-
-        throw e;
-    }
-
-    protected Object getResponseDataIfAny(Response response) {
-        try {
-            return response.deserialize();
-        } catch (Exception e) {
+        if(e.getCause() != null && e.getCause() instanceof Exception) {
+            throw (Exception)e.getCause();
         }
-        return null;
+        throw e;
     }
 
 }

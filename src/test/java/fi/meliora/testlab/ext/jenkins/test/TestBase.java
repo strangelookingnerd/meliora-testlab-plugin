@@ -33,8 +33,13 @@ public class TestBase {
 
     public static final String FIELD_BLOCK_ADVANCEDSETTINGS = "_.advancedSettings";
     public static final String FIELD_COMPANYID = "_.companyId";
+    public static final String FIELD_USINGONPREMISE = "_.usingonpremise";
+    public static final String FIELD_ONPREMISEURL = "_.onpremiseurl";
     public static final String FIELD_APIKEY = "_.apiKey";
     public static final String FIELD_TESTCASEMAPPINGFIELD = "_.testCaseMappingField";
+
+    public static final String FIELD_CORS = "_.cors";
+    public static final String FIELD_ORIGIN = "_.origin";
 
     /**
      * Asserts that a htmlinput is empty.
