@@ -1,0 +1,28 @@
+<div>
+    <p>
+        If your Jenkins is using security (which it should) and you'd prefer to your
+        Testlab users to be able to use Jenkins Jobs widget to see Jenkins' jobs and
+        build them, you should enable this option and setup the origin domain.
+    </p>
+    <p>
+        When enabling this setting:
+    </p>
+    <ul>
+        <li>
+            Jenkins responses will be injected with <a target="_blank" href="http://www.w3.org/TR/cors/">CORS</a>
+            HTTP headers which tell the browser to allow calls from Testlab to Jenkins' API.
+            <i>If your Jenkins is behind a proxy, make sure your proxy is configured to work
+                with CORS enabled Jenkins. This means, that your proxy should pass though
+                Jenkins sent "Access-Control-Allow-Origin", "Access-Control-Allow-Methods",
+                "Access-Control-Allow-Headers" and "Access-Control-Allow-Credentials" response
+                headers to Testlab, and Testlab sent "Origin", "Authorization" and ".crumb" headers to Jenkins.
+            </i>
+        </li>
+        <li>
+            You should configure the Origin setting to a full URL origin address of your
+            Testlab such as 'http://mytestlab.melioratestlab.com'. This restricts the
+            CORS calls to only be allowed from this host. If set to a wildcard value '*'
+            the calls will work but the CORS calls will be allowed from any domain.
+        </li>
+    </ul>
+</div>
