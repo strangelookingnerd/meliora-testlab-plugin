@@ -65,7 +65,7 @@ public class Sender {
             log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
 
         // parse test results
-        AbstractTestResultAction ra = build.getTestResultAction();
+        AbstractTestResultAction ra = build.getAction(AbstractTestResultAction.class);
 
         if(log.isLoggable(Level.FINE))
             log.fine("Have results: " + ra);
