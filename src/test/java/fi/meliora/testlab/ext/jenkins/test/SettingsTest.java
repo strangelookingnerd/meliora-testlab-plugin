@@ -100,7 +100,7 @@ public class SettingsTest extends TestBase {
     @Test
     public void testJobSettings() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject("test");
-        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null));
+        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null));
 
         JenkinsRule.WebClient client = getWebClient();
         client.login("admin", "admin");
@@ -111,6 +111,7 @@ public class SettingsTest extends TestBase {
 
         HtmlTextInput projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
         HtmlTextInput testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
+        HtmlTextInput milestoneInput = form.getInputByName(FIELD_MILESTONE);
         HtmlTextInput testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         HtmlTextInput testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
         HtmlCheckBoxInput issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
@@ -126,6 +127,7 @@ public class SettingsTest extends TestBase {
 
         assertEmpty(projectkeyInput);
         assertEmpty(testRunTitleInput);
+        assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
 
@@ -151,6 +153,7 @@ public class SettingsTest extends TestBase {
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
+        milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
         issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
@@ -166,6 +169,7 @@ public class SettingsTest extends TestBase {
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
+        assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
 
@@ -183,6 +187,7 @@ public class SettingsTest extends TestBase {
 
         //// set other optional fields and issues block and assert save
 
+        milestoneInput.setValueAttribute("Milestone 1");
         testTargetTitleInput.setValueAttribute("Some version");
         testEnvironmentTitleInput.setValueAttribute("Some env");
         issuesSettingsInput.setChecked(true);
@@ -195,6 +200,7 @@ public class SettingsTest extends TestBase {
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
+        milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
         issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
@@ -210,6 +216,7 @@ public class SettingsTest extends TestBase {
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
+        assertHasValue(milestoneInput, "Milestone 1");
         assertHasValue(testTargetTitleInput, "Some version");
         assertHasValue(testEnvironmentTitleInput, "Some env");
 
@@ -237,6 +244,7 @@ public class SettingsTest extends TestBase {
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
+        milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
         issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
@@ -252,6 +260,7 @@ public class SettingsTest extends TestBase {
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
+        assertHasValue(milestoneInput, "Milestone 1");
         assertHasValue(testTargetTitleInput, "Some version");
         assertHasValue(testEnvironmentTitleInput, "Some env");
 

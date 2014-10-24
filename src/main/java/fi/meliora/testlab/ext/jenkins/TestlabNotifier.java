@@ -50,6 +50,13 @@ public class TestlabNotifier extends Notifier {
         return testRunTitle;
     }
 
+    // identifier or a title of a milestone the results are bound to in Testlab
+    private String milestone;
+
+    public String getMilestone() {
+        return milestone;
+    }
+
     // title of the version the results are bound to in Testlab
     private String testTargetTitle;
 
@@ -132,9 +139,10 @@ public class TestlabNotifier extends Notifier {
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
+    public TestlabNotifier(String projectKey, String testRunTitle, String milestone, String testTargetTitle, String testEnvironmentTitle, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
         this.projectKey = projectKey;
         this.testRunTitle = testRunTitle;
+        this.milestone = milestone;
         this.testTargetTitle = testTargetTitle;
         this.testEnvironmentTitle = testEnvironmentTitle;
 
@@ -283,6 +291,7 @@ public class TestlabNotifier extends Notifier {
                 runOnpremiseurl,
                 runApiKey,
                 projectKey,
+                milestone,
                 testRunTitle,
                 testTargetTitle,
                 testEnvironmentTitle,
@@ -585,6 +594,7 @@ public class TestlabNotifier extends Notifier {
         return "TestlabNotifier{" +
                 "projectKey='" + projectKey + '\'' +
                 ", testRunTitle='" + testRunTitle + '\'' +
+                ", milestone='" + milestone + '\'' +
                 ", testTargetTitle='" + testTargetTitle + '\'' +
                 ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +
                 ", issuesSettings=" + issuesSettings +

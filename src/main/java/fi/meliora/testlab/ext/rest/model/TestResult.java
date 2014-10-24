@@ -39,6 +39,13 @@ public class TestResult extends ModelObject {
     private String user;
 
     @XmlElement
+    private Long milestoneId;
+    @XmlElement
+    private String milestoneIdentifier;
+    @XmlElement
+    private String milestoneTitle;
+
+    @XmlElement
     private Long testTargetId;
     @XmlElement
     private String testTargetTitle;
@@ -155,6 +162,45 @@ public class TestResult extends ModelObject {
      */
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public Long getMilestoneId() {
+        return milestoneId;
+    }
+
+    /**
+     * Id of the milestone for the test run and issues. If null, milestoneIdentifier and milestoneTitle are used.
+     *
+     * @param milestoneId
+     */
+    public void setMilestoneId(Long milestoneId) {
+        this.milestoneId = milestoneId;
+    }
+
+    public String getMilestoneIdentifier() {
+        return milestoneIdentifier;
+    }
+
+    /**
+     * Identifier of the milestone for the test run and issues. If null, milestoneTitle is used.
+     *
+     * @param milestoneIdentifier
+     */
+    public void setMilestoneIdentifier(String milestoneIdentifier) {
+        this.milestoneIdentifier = milestoneIdentifier;
+    }
+
+    public String getMilestoneTitle() {
+        return milestoneTitle;
+    }
+
+    /**
+     * Title of the milestone for the test run and issues.
+     *
+     * @param milestoneTitle
+     */
+    public void setMilestoneTitle(String milestoneTitle) {
+        this.milestoneTitle = milestoneTitle;
     }
 
     public Long getTestTargetId() {

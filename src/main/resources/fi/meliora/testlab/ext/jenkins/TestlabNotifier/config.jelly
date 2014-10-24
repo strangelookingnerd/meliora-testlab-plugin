@@ -17,6 +17,13 @@
     </f:entry>
 
     <f:entry
+            title="Milestone (Optional)"
+            description="Milestone in Testlab the results and issues are bound to."
+            field="milestone">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry
             title="Version (Optional)"
             description="Version in Testlab the results and issues are bound to."
             field="testTargetTitle">

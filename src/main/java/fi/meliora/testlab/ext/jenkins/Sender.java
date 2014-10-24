@@ -48,6 +48,7 @@ public class Sender {
      * @param onpremiseurl
      * @param apiKey
      * @param projectKey
+     * @param milestone
      * @param testRunTitle
      * @param testTargetTitle
      * @param testEnvironmentTitle
@@ -58,11 +59,11 @@ public class Sender {
      * @param testCaseMappingField
      * @param build
      */
-    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
+    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
 
         // parse test results
         AbstractTestResultAction ra = build.getTestResultAction();
@@ -81,6 +82,9 @@ public class Sender {
             data.setStatus(fi.meliora.testlab.ext.rest.model.TestResult.STATUS_FINISHED);
             data.setProjectKey(projectKey);
             data.setTestRunTitle(testRunTitle);
+            // note: we send the set milestone in both fields as backend logic tries first with identifier and fallbacks to title
+            data.setMilestoneIdentifier(milestone);
+            data.setMilestoneTitle(milestone);
             data.setAddIssues(addIssues);
             data.setMergeAsSingleIssue(mergeAsSingleIssue);
             data.setReopenExistingIssues(reopenExisting);

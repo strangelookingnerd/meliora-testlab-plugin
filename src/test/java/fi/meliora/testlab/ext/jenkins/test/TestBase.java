@@ -23,6 +23,7 @@ public class TestBase {
 
     public static final String FIELD_PROJECTKEY = "_.projectKey";
     public static final String FIELD_TESTRUNTITLE = "_.testRunTitle";
+    public static final String FIELD_MILESTONE = "_.milestone";
     public static final String FIELD_TESTTARGETTITLE = "_.testTargetTitle";
     public static final String FIELD_TESTENVIRONMENTTITLE = "_.testEnvironmentTitle";
 
