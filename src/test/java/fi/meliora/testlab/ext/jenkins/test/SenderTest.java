@@ -1,8 +1,12 @@
 package fi.meliora.testlab.ext.jenkins.test;
 
 import fi.meliora.testlab.ext.jenkins.TestlabNotifier;
+import hudson.maven.MavenModuleSet;
+import hudson.maven.MavenModuleSetBuild;
+import hudson.maven.settings.SettingConfig;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
+import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Maven;
 import hudson.tasks.Shell;
 import hudson.tasks.junit.JUnitResultArchiver;
@@ -28,7 +32,7 @@ public class SenderTest extends TestBase {
      * <ul>
      *     <li>creates a new job</li>
      *     <li>copies testproject/ codebase to job workspace</li>
-     *     <li>configures a maven build, junit publish and testlab publishes to the job</li>
+     *     <li>configures a freestyled maven build, junit publish and testlab publishes to the job</li>
      *     <li>builds the build which fails with results and publishes the results to testlab specified with parameters (see below)</li>
      *     <li>asserts that build console log contains a note about successful publish</li>
      * </ul>
@@ -38,7 +42,7 @@ public class SenderTest extends TestBase {
      * @throws Exception
      */
     @Test
-    public void testSender() throws Exception {
+    public void testSenderFreestyleJob() throws Exception {
         // check if we have proper vars to run this test
         String TEST_APIKEY = System.getProperty("APIKEY");
 
@@ -105,6 +109,9 @@ public class SenderTest extends TestBase {
         // build completed
 
         String log = FileUtils.readFileToString(build.getLogFile());
+
+        System.out.println("\n\n** TEST BUILD LOG **\n\n" + log + "\n\n****\n\n");
+
         assertTrue(
                 "log file did not report a successful publish.",
                 log.contains("Publishing test results to Testlab project: TLABDEMO\nFinished: FAILURE")

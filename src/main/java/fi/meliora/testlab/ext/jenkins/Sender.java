@@ -9,6 +9,7 @@ import hudson.model.Run;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.AbstractTestResultAction;
+import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
 import jenkins.model.Jenkins;
 
@@ -130,63 +131,19 @@ public class Sender {
             if(!TestlabNotifier.isBlank(testEnvironmentTitle))
                 data.setTestEnvironmentTitle(testEnvironmentTitle);
 
-            if(ra.getResult() instanceof hudson.tasks.test.TestResult) {
-                TestResult result = (TestResult)ra.getResult();
-                if(log.isLoggable(Level.FINE))
-                    log.fine("Result object: " + result + ", " + result.getClass().getName());
-
-                // parse results
-                if(result instanceof hudson.tasks.junit.TestResult) {
-
-                    //// junit results
-
-                    if(log.isLoggable(Level.FINE))
-                        log.fine("Detected junit compatible result object.");
-
-                    hudson.tasks.junit.TestResult junitResult = (hudson.tasks.junit.TestResult)result;
-
-                    for(SuiteResult sr : junitResult.getSuites()) {
-                        for(CaseResult cr : sr.getCases()) {
-                            String id = cr.getClassName() + "." + cr.getName();
-                            if(log.isLoggable(Level.FINE))
-                                log.fine("Status for " + id + " is " + cr.getStatus());
-                            int res;
-                            if(cr.isPassed())
-                                res = TestCaseResult.RESULT_PASS;
-                            else if(cr.isSkipped())
-                                res = TestCaseResult.RESULT_SKIP;
-                            else
-                                res = TestCaseResult.RESULT_FAIL;
-
-                            String msg = cr.getErrorDetails();
-                            String stacktrace = cr.getErrorStackTrace();
-
-                            results.add(getTestCaseResult(build, id, res, msg, stacktrace, user, cr.getDuration()));
-                        }
-                    }
-                } else {
-
-                    //// a generic test result, try to parse it
-                    //
-                    // this should work for example with testng harness
-                    // see https://github.com/jenkinsci/testng-plugin-plugin/blob/master/src/main/java/hudson/plugins/testng/results/MethodResult.java
-
-                    if(log.isLoggable(Level.FINE))
-                        log.fine("Detected generic result object.");
-
-                    for(TestResult tr : result.getPassedTests()) {
-                        String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
-                        results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_PASS, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
-                    }
-                    for(TestResult tr : result.getFailedTests()) {
-                        String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
-                        results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_FAIL, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
-                    }
-                    for(TestResult tr : result.getSkippedTests()) {
-                        String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
-                        results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_SKIP, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
+            Object resultObject = ra.getResult();
+            if(resultObject instanceof List) {
+                List childReports = (List)resultObject;
+                for(Object childReport : childReports) {
+                    if(childReport instanceof AggregatedTestResultAction.ChildReport) {
+                        Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
+                        if(log.isLoggable(Level.FINE))
+                            log.fine("Have child results: " + childResultObject);
+                        parseResult(build, childResultObject, results, user);
                     }
                 }
+            } else {
+                parseResult(build, resultObject, results, user);
             }
 
             if(results.size() > 0) {
@@ -205,6 +162,67 @@ public class Sender {
             } else {
                 if(log.isLoggable(Level.INFO))
                     log.info("No test results to send to Testlab. Skipping.");
+            }
+        }
+    }
+
+    protected static void parseResult(AbstractBuild<?, ?> build, Object resultObject, final List<TestCaseResult> results, String user) {
+        if(resultObject instanceof hudson.tasks.test.TestResult) {
+            TestResult result = (TestResult)resultObject;
+            if(log.isLoggable(Level.FINE))
+                log.fine("Result object: " + result + ", " + result.getClass().getName());
+
+            // parse results
+            if(result instanceof hudson.tasks.junit.TestResult) {
+
+                //// junit results
+
+                if(log.isLoggable(Level.FINE))
+                    log.fine("Detected junit compatible result object.");
+
+                hudson.tasks.junit.TestResult junitResult = (hudson.tasks.junit.TestResult)result;
+
+                for(SuiteResult sr : junitResult.getSuites()) {
+                    for(CaseResult cr : sr.getCases()) {
+                        String id = cr.getClassName() + "." + cr.getName();
+                        if(log.isLoggable(Level.FINE))
+                            log.fine("Status for " + id + " is " + cr.getStatus());
+                        int res;
+                        if(cr.isPassed())
+                            res = TestCaseResult.RESULT_PASS;
+                        else if(cr.isSkipped())
+                            res = TestCaseResult.RESULT_SKIP;
+                        else
+                            res = TestCaseResult.RESULT_FAIL;
+
+                        String msg = cr.getErrorDetails();
+                        String stacktrace = cr.getErrorStackTrace();
+
+                        results.add(getTestCaseResult(build, id, res, msg, stacktrace, user, cr.getDuration()));
+                    }
+                }
+            } else {
+
+                //// a generic test result, try to parse it
+                //
+                // this should work for example with testng harness
+                // see https://github.com/jenkinsci/testng-plugin-plugin/blob/master/src/main/java/hudson/plugins/testng/results/MethodResult.java
+
+                if(log.isLoggable(Level.FINE))
+                    log.fine("Detected generic result object.");
+
+                for(TestResult tr : result.getPassedTests()) {
+                    String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
+                    results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_PASS, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
+                }
+                for(TestResult tr : result.getFailedTests()) {
+                    String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
+                    results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_FAIL, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
+                }
+                for(TestResult tr : result.getSkippedTests()) {
+                    String id = tr.getParent() != null ? tr.getParent().getName() + "." + tr.getName() : tr.getName();
+                    results.add(getTestCaseResult(build, id, TestCaseResult.RESULT_SKIP, tr.getErrorDetails(), tr.getErrorStackTrace(), user, tr.getDuration()));
+                }
             }
         }
     }
