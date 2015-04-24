@@ -1,11 +1,10 @@
 package fi.meliora.testlab.ext.jenkins;
 
 import hudson.AbortException;
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
-import hudson.model.Descriptor;
+import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.PluginServletFilter;
 import net.sf.json.JSONObject;
@@ -15,7 +14,10 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -36,6 +38,9 @@ public class TestlabNotifier extends Notifier {
         to return true.
      */
 
+    protected static final String DEFAULT_COMMENT_TEMPLATE
+            = "Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL} - ${BUILD_STATUS}";
+
     // project key which to publish the results to
     private String projectKey;
 
@@ -48,6 +53,13 @@ public class TestlabNotifier extends Notifier {
 
     public String getTestRunTitle() {
         return testRunTitle;
+    }
+
+    // comment of the test run to create or update at Testlab side
+    private String comment;
+
+    public String getComment() {
+        return comment;
     }
 
     // identifier or a title of a milestone the results are bound to in Testlab
@@ -69,6 +81,13 @@ public class TestlabNotifier extends Notifier {
 
     public String getTestEnvironmentTitle() {
         return testEnvironmentTitle;
+    }
+
+    // tags for the test run
+    private String tags;
+
+    public String getTags() {
+        return tags;
     }
 
     // holder for optional issues settings
@@ -139,12 +158,14 @@ public class TestlabNotifier extends Notifier {
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String milestone, String testTargetTitle, String testEnvironmentTitle, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
+    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
         this.projectKey = projectKey;
         this.testRunTitle = testRunTitle;
+        this.comment = comment;
         this.milestone = milestone;
         this.testTargetTitle = testTargetTitle;
         this.testEnvironmentTitle = testEnvironmentTitle;
+        this.tags = tags;
 
         this.issuesSettings = issuesSettings;
         if(issuesSettings != null) {
@@ -255,6 +276,36 @@ public class TestlabNotifier extends Notifier {
             log.fine("using hosted with company id: " + runCompanyId);
         }
 
+        // replace env vars for applicable fields
+
+        EnvVars envVars = build.getEnvironment(listener);
+
+        Map<String, String> additionalKeys = new HashMap<String, String>();
+        additionalKeys.put("BUILD_FULL_DISPLAY_NAME", build.getFullDisplayName());
+        Run.Summary summary = build.getBuildStatusSummary();
+        additionalKeys.put("BUILD_STATUS", summary != null ? summary.message : "[No build status available]");
+        Result result = build.getResult();
+        additionalKeys.put("BUILD_RESULT", result != null ? result.toString() : "[No build result available]");
+
+        VariableReplacer vr = new VariableReplacer(envVars, additionalKeys);
+
+        if(log.isLoggable(Level.FINE)) {
+            log.fine("Environment variables:");
+            for(String key : vr.getVars().keySet()) {
+                log.fine(" " + key + "=" + vr.getVars().get(key));
+            }
+        }
+
+        String runProjectKey = vr.replace(projectKey);
+        String runMilestone = vr.replace(milestone);
+        String runTestRunTitle = vr.replace(testRunTitle);
+        String runComment = vr.replace(isBlank(comment) ? DEFAULT_COMMENT_TEMPLATE : comment);
+        String runTestTargetTitle = vr.replace(testTargetTitle);
+        String runTestEnvironmentTitle = vr.replace(testEnvironmentTitle);
+        String runTags = vr.replace(tags);
+        String runAssignToUser = vr.replace(assignToUser);
+        runTestCaseMappingField = vr.replace(runTestCaseMappingField);
+
         String abortError = null;
         if(!runUsingonpremise && isBlank(runCompanyId)) {
             abortError = "Could not publish results to Testlab: Company ID is not set. Configure it for your job or globally in Jenkins' configuration.";
@@ -269,15 +320,15 @@ public class TestlabNotifier extends Notifier {
         }
 
         if(isBlank(runTestCaseMappingField)) {
-            abortError = "Could not publish results to Testlab: Test case mapping field is not set. Configure it for your job or globally in Jenkins' configuration.";
+            abortError = "Could not publish results to Testlab: Test case mapping field is not set. Configure it for your job or globally in Jenkins' configuration or, if the value contains variable tags make sure they have values.";
         }
 
-        if(isBlank(projectKey)) {
-            abortError = "Could not publish results to Testlab: Project key is not set. Configure it for your job.";
+        if(isBlank(runProjectKey)) {
+            abortError = "Could not publish results to Testlab: Project key is not set. Configure it for your job or, if the value contains variable tags make sure they have values.";
         }
 
-        if(isBlank(testRunTitle)) {
-            abortError = "Could not publish results to Testlab: Test run title is not set. Configure it for your job.";
+        if(isBlank(runTestRunTitle)) {
+            abortError = "Could not publish results to Testlab: Test run title is not set. Configure it for your job or, if the value contains variable tags make sure they have values.";
         }
 
         if(abortError != null) {
@@ -290,15 +341,17 @@ public class TestlabNotifier extends Notifier {
                 runUsingonpremise,
                 runOnpremiseurl,
                 runApiKey,
-                projectKey,
-                milestone,
-                testRunTitle,
-                testTargetTitle,
-                testEnvironmentTitle,
+                runProjectKey,
+                runMilestone,
+                runTestRunTitle,
+                runComment,
+                runTestTargetTitle,
+                runTestEnvironmentTitle,
+                runTags,
                 issuesSettings != null,
                 mergeAsSingleIssue,
                 reopenExisting,
-                !isBlank(assignToUser) ? assignToUser : null,
+                !isBlank(runAssignToUser) ? runAssignToUser : null,
                 runTestCaseMappingField,
                 build
         );
@@ -425,6 +478,10 @@ public class TestlabNotifier extends Notifier {
 
         public Cors getCors() {
             return cors;
+        }
+
+        public String getDefaultCommentTemplate() {
+            return DEFAULT_COMMENT_TEMPLATE;
         }
 
         @Override
@@ -594,6 +651,7 @@ public class TestlabNotifier extends Notifier {
         return "TestlabNotifier{" +
                 "projectKey='" + projectKey + '\'' +
                 ", testRunTitle='" + testRunTitle + '\'' +
+                ", comment='" + comment + '\'' +
                 ", milestone='" + milestone + '\'' +
                 ", testTargetTitle='" + testTargetTitle + '\'' +
                 ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +

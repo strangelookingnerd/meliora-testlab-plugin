@@ -55,6 +55,9 @@ public class TestResult extends ModelObject {
     @XmlElement
     private String testEnvironmentTitle;
 
+    @XmlElement
+    private String tags;
+
     @XmlElement(type = TestCaseResult.class)
     private List<TestCaseResult> results;
 
@@ -253,6 +256,19 @@ public class TestResult extends ModelObject {
      */
     public void setTestEnvironmentTitle(String testEnvironmentTitle) {
         this.testEnvironmentTitle = testEnvironmentTitle;
+    }
+
+    public String getTags() {
+        return tags;
+    }
+
+    /**
+     * Tags for the test run. Optional. Separate multiple tags with spaces ("tag1 tag2 tag3 ...").
+     *
+     * @param tags
+     */
+    public void setTags(String tags) {
+        this.tags = tags;
     }
 
     public String getTestCaseMappingField() {

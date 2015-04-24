@@ -5,13 +5,11 @@ import fi.meliora.testlab.ext.crest.TestResultResource;
 import fi.meliora.testlab.ext.rest.model.AddTestResultResponse;
 import fi.meliora.testlab.ext.rest.model.TestCaseResult;
 import hudson.model.AbstractBuild;
-import hudson.model.Run;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
-import jenkins.model.Jenkins;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,8 +49,10 @@ public class Sender {
      * @param projectKey
      * @param milestone
      * @param testRunTitle
+     * @param comment
      * @param testTargetTitle
      * @param testEnvironmentTitle
+     * @param tags
      * @param addIssues
      * @param mergeAsSingleIssue
      * @param reopenExisting
@@ -60,11 +60,11 @@ public class Sender {
      * @param testCaseMappingField
      * @param build
      */
-    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String testTargetTitle, String testEnvironmentTitle, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
+    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
 
         // parse test results
         AbstractTestResultAction ra = build.getAction(AbstractTestResultAction.class);
@@ -92,44 +92,17 @@ public class Sender {
             data.setAssignIssuesToUser(assignToUser);
             data.setTestCaseMappingField(testCaseMappingField);
             data.setUser(user);
-
-            StringBuilder comment = new StringBuilder();
-            comment.append("Automated tests from Jenkins, build: ");
-            comment.append(build.getFullDisplayName());
-            comment.append(", ");
-            String jenkinsUrl = Jenkins.getInstance().getRootUrl();
-            if(TestlabNotifier.isBlank(jenkinsUrl)) {
-                try {
-                    jenkinsUrl = Jenkins.getInstance().getRootUrlFromRequest();
-                } catch (Exception e) {
-                    // note: this fails when run in unit test with JenkinsRule - ignore
-                }
-            }
-            if(TestlabNotifier.isBlank(jenkinsUrl)) {
-                // fallback to deprecated absolute url of build
-                try {
-                    comment.append(build.getAbsoluteUrl());
-                } catch (Exception e) {
-                    // note: this fails when run in unit test with JenkinsRule - ignore
-                }
-            } else {
-                comment.append(jenkinsUrl);
-                comment.append(build.getUrl());
-            }
-
-            Run.Summary summary = build.getBuildStatusSummary();
-            if(summary != null && !TestlabNotifier.isBlank(summary.message)) {
-                if(comment.length() > 0)
-                    comment.append("\n\n");
-                comment.append(summary.message);
-            }
-            data.setComment(comment.toString());
+            data.setComment(comment);
 
             if(!TestlabNotifier.isBlank(testTargetTitle))
                 data.setTestTargetTitle(testTargetTitle);
 
             if(!TestlabNotifier.isBlank(testEnvironmentTitle))
                 data.setTestEnvironmentTitle(testEnvironmentTitle);
+
+            if(!TestlabNotifier.isBlank(tags)) {
+                data.setTags(tags);
+            }
 
             Object resultObject = ra.getResult();
             if(resultObject instanceof List) {
@@ -161,7 +134,7 @@ public class Sender {
                     log.info("Posted results successfully to testlab test run: " + response.getTestRunId());
             } else {
                 if(log.isLoggable(Level.INFO))
-                    log.info("No test results to send to Testlab. Skipping.");
+                    log.info("No test results resolved to send to Testlab. Skipping.");
             }
         }
     }

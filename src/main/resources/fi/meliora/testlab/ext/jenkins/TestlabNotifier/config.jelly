@@ -11,9 +11,17 @@
 
     <f:entry
             title="Test run title"
-            description="Name of the Testlab test run to create or update"
+            description="Name of the Testlab test run to create or update."
             field="testRunTitle">
         <f:textbox clazz="required" />
+    </f:entry>
+
+    <f:entry
+            title="Test run comment"
+            description="Comment of the Testlab test run."
+            field="comment">
+        <f:textarea clazz="required"
+                    default="${descriptor.getDefaultCommentTemplate()}"/>
     </f:entry>
 
     <f:entry
@@ -34,6 +42,13 @@
             title="Environment (Optional)"
             description="Environment in Testlab the results and issues are bound to."
             field="testEnvironmentTitle">
+        <f:textbox />
+    </f:entry>
+
+    <f:entry
+            title="Tags (Optional)"
+            description="Tags to be set for the Testlab test run. Separate multiple tags with spaces."
+            field="tags">
         <f:textbox />
     </f:entry>
 

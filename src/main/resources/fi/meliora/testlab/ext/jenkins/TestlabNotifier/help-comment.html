@@ -1,0 +1,31 @@
+<div>
+    <p>
+        The comment to be set for the Testlab test run to create or update.
+    </p>
+    <p>
+        In this field the build time environmental variables of Jenkins are handy.
+        In addition to the <a href="https://wiki.jenkins-ci.org/display/JENKINS/Building+a+software+project#Buildingasoftwareproject-JenkinsSetEnvironmentVariables" target="_blank">by default set environment variables</a>
+        this plugin registers the following variables that can be used for configuration values:
+    </p>
+    <table width="100%">
+        <tr>
+            <td><b>Variable</b></td>
+            <td><b>Description</b></td>
+        </tr>
+        <tr>
+            <td>${BUILD_FULL_DISPLAY_NAME}</td>
+            <td>Combined full display name of the build with job name and build number. For example 'my jenkins job #133'</td>
+        </tr>
+        <tr>
+            <td>${BUILD_RESULT}</td>
+            <td>Result of the build. For example 'SUCCESS' or 'UNSTABLE'.</td>
+        </tr>
+        <tr>
+            <td>${BUILD_STATUS}</td>
+            <td>Summary of the overall build. For example 'broken for a long time'.</td>
+        </tr>
+    </table>
+    <p>
+        To use variables in your configuration values make sure to enter tags as <i>${VARIABLE}</i>.
+    </p>
+</div>
