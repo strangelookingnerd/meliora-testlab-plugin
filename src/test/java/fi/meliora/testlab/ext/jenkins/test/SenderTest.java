@@ -94,9 +94,11 @@ public class SenderTest extends TestBase {
                 new TestlabNotifier(
                         "TLABDEMO",
                         "Jenkins plugin unit test run",
+                        "Test run comment",
                         "Milestone 3",
                         "unit test version",
                         "unit test jenkins",
+                        "jenkins test",
                         null,
                         advancedSettings
                 )

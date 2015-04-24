@@ -1,6 +1,7 @@
 package fi.meliora.testlab.ext.jenkins.test;
 
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
+import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
@@ -42,6 +43,9 @@ public class TestBase {
     public static final String FIELD_CORS = "_.cors";
     public static final String FIELD_ORIGIN = "_.origin";
 
+    public static final String FIELD_COMMENT = "_.comment";
+    public static final String FIELD_TAGS = "_.tags";
+
     /**
      * Asserts that a htmlinput is empty.
      *
@@ -59,6 +63,16 @@ public class TestBase {
      */
     protected void assertHasValue(HtmlInput input, String value) {
         assertTrue(input.getNameAttribute() + " value was not " + value, value.equals(input.getValueAttribute()));
+    }
+
+    /**
+     * Asserts that test area has a certain value.
+     *
+     * @param textArea
+     * @param value
+     */
+    protected void assertHasValue(HtmlTextArea textArea, String value) {
+        assertTrue(textArea.getNameAttribute() + " value was not " + value, value.equals(textArea.getText()));
     }
 
     /**

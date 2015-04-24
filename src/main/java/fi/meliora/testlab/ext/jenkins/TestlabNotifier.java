@@ -38,7 +38,7 @@ public class TestlabNotifier extends Notifier {
         to return true.
      */
 
-    protected static final String DEFAULT_COMMENT_TEMPLATE
+    public static final String DEFAULT_COMMENT_TEMPLATE
             = "Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL} - ${BUILD_STATUS}";
 
     // project key which to publish the results to

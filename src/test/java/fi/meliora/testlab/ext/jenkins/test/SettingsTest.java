@@ -100,7 +100,7 @@ public class SettingsTest extends TestBase {
     @Test
     public void testJobSettings() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject("test");
-        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null));
+        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null));
 
         JenkinsRule.WebClient client = getWebClient();
         client.login("admin", "admin");
@@ -124,6 +124,8 @@ public class SettingsTest extends TestBase {
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        HtmlTextArea commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        HtmlTextInput tagsInput = form.getInputByName(FIELD_TAGS);
 
         assertEmpty(projectkeyInput);
         assertEmpty(testRunTitleInput);
@@ -142,6 +144,9 @@ public class SettingsTest extends TestBase {
         assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
+
+        assertHasValue(commentInput, TestlabNotifier.DEFAULT_COMMENT_TEMPLATE);
+        assertEmpty(tagsInput);
 
         //// set only required fields and assert save
 
@@ -166,6 +171,8 @@ public class SettingsTest extends TestBase {
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        tagsInput = form.getInputByName(FIELD_TAGS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -185,6 +192,9 @@ public class SettingsTest extends TestBase {
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
 
+        assertHasValue(commentInput, TestlabNotifier.DEFAULT_COMMENT_TEMPLATE);
+        assertEmpty(tagsInput);
+
         //// set other optional fields and issues block and assert save
 
         milestoneInput.setValueAttribute("Milestone 1");
@@ -194,6 +204,8 @@ public class SettingsTest extends TestBase {
         mergeAsSingleIssueInput.setChecked(false);
         reopenExistingInput.setChecked(true);
         assignToUserInput.setValueAttribute("someuser");
+        commentInput.setText("comment text");
+        tagsInput.setValueAttribute("jenkins tags");
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
         form = configurePage.getFormByName("config");
@@ -213,6 +225,8 @@ public class SettingsTest extends TestBase {
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        tagsInput = form.getInputByName(FIELD_TAGS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -229,6 +243,9 @@ public class SettingsTest extends TestBase {
         assertEmpty(companyIdInput);
         assertEmpty(apiKeyInput);
         assertEmpty(testCaseMappingFieldInput);
+
+        assertHasValue(commentInput, "comment text");
+        assertHasValue(tagsInput, "jenkins tags");
 
         //// set advanced setting fields and assert save
 
@@ -257,6 +274,8 @@ public class SettingsTest extends TestBase {
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
         testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
+        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        tagsInput = form.getInputByName(FIELD_TAGS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -268,6 +287,9 @@ public class SettingsTest extends TestBase {
         assertChecked(mergeAsSingleIssueInput, false);
         assertChecked(reopenExistingInput, true);
         assertHasValue(assignToUserInput, "someuser");
+
+        assertHasValue(commentInput, "comment text");
+        assertHasValue(tagsInput, "jenkins tags");
 
         assertChecked(advancedSettingsInput, true);
         assertHasValue(companyIdInput, "unittestcompanyjob");
