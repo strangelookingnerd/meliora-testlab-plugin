@@ -1,0 +1,21 @@
+<div>
+    <p>
+        Environment variables to sent to Testlab as test case parameters.
+    </p>
+    <p>
+        Test cases in Testlab can include parameters in the content as ${PARAM1} formatted tags. Normally,
+        these tags are set and replaced with values set during the test case execution or execution planning
+        phase. By listing variables to this setting makes it possible to send values of environmental
+        variables from Jenkins as test case parameters to Testlab.
+    </p>
+    <p>
+        For example, test case(s) in your Testlab project might have a parameter titled ${BROWSER}.
+        When running automated UI tests in your Jenkins, enter a value "BROWSER" to this setting
+        and ensure that your job sets an environmental variable BROWSER to some sensible value. This way
+        running the job sends and sets the ${BROWSER} test case parameter value to all run tests to a value matching
+        to the environmental variable.
+    </p>
+    <p>
+        Probably the easiest way to set environment variables is to use a <a href="https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin" target="_blank">fitting plugin</a>.
+    </p>
+</div>
