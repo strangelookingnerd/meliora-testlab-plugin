@@ -3,6 +3,7 @@ package fi.meliora.testlab.ext.jenkins;
 import fi.meliora.testlab.ext.crest.CrestEndpointFactory;
 import fi.meliora.testlab.ext.crest.TestResultResource;
 import fi.meliora.testlab.ext.rest.model.AddTestResultResponse;
+import fi.meliora.testlab.ext.rest.model.KeyValuePair;
 import fi.meliora.testlab.ext.rest.model.TestCaseResult;
 import hudson.model.AbstractBuild;
 import hudson.tasks.junit.CaseResult;
@@ -13,6 +14,7 @@ import hudson.tasks.test.TestResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,6 +55,7 @@ public class Sender {
      * @param testTargetTitle
      * @param testEnvironmentTitle
      * @param tags
+     * @param parameters
      * @param addIssues
      * @param mergeAsSingleIssue
      * @param reopenExisting
@@ -60,11 +63,11 @@ public class Sender {
      * @param testCaseMappingField
      * @param build
      */
-    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
+    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags, Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", [" + parameters + "], " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
 
         // parse test results
         AbstractTestResultAction ra = build.getAction(AbstractTestResultAction.class);
@@ -93,6 +96,18 @@ public class Sender {
             data.setTestCaseMappingField(testCaseMappingField);
             data.setUser(user);
             data.setComment(comment);
+            if(parameters != null && parameters.size() > 0) {
+                List<KeyValuePair> parameterValues = new ArrayList<KeyValuePair>();
+                for(String name : parameters.keySet()) {
+                    KeyValuePair kvp = new KeyValuePair();
+                    kvp.setKey(name);
+                    kvp.setValue(parameters.get(name));
+                    parameterValues.add(kvp);
+                    if(log.isLoggable(Level.FINE))
+                        log.fine("Sending test case parameter " + name + " with value " + kvp.getValue());
+                }
+                data.setParameters(parameterValues);
+            }
 
             if(!TestlabNotifier.isBlank(testTargetTitle))
                 data.setTestTargetTitle(testTargetTitle);

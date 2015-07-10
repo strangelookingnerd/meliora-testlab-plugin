@@ -52,6 +52,13 @@
         <f:textbox />
     </f:entry>
 
+    <f:entry
+            title="Test case parameter variables (Optional)"
+            description="Environment variables to sent to Testlab as test case parameters. Separate multiple variables with commas."
+            field="parameters">
+        <f:textbox />
+    </f:entry>
+
     <f:optionalBlock field="issuesSettings" title="Add issues?"
                      checked="${not empty instance.issuesSettings}"
                      help="/plugin/meliora-testlab/help-addIssues.html">

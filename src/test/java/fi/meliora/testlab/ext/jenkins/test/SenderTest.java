@@ -100,6 +100,7 @@ public class SenderTest extends TestBase {
                         "unit test jenkins",
                         "jenkins test",
                         null,
+                        null,
                         advancedSettings
                 )
         );

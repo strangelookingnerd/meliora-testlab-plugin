@@ -90,6 +90,13 @@ public class TestlabNotifier extends Notifier {
         return tags;
     }
 
+    // test case parameters to send from environmental variables
+    private String parameters;
+
+    public String getParameters() {
+        return parameters;
+    }
+
     // holder for optional issues settings
     private IssuesSettings issuesSettings;
 
@@ -158,7 +165,7 @@ public class TestlabNotifier extends Notifier {
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
+    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
         this.projectKey = projectKey;
         this.testRunTitle = testRunTitle;
         this.comment = comment;
@@ -166,6 +173,7 @@ public class TestlabNotifier extends Notifier {
         this.testTargetTitle = testTargetTitle;
         this.testEnvironmentTitle = testEnvironmentTitle;
         this.tags = tags;
+        this.parameters = parameters;
 
         this.issuesSettings = issuesSettings;
         if(issuesSettings != null) {
@@ -306,6 +314,24 @@ public class TestlabNotifier extends Notifier {
         String runAssignToUser = vr.replace(assignToUser);
         runTestCaseMappingField = vr.replace(runTestCaseMappingField);
 
+        String runParameterVariables = vr.replace(parameters);
+        Map<String, String> runParameters = null;
+        if(runParameterVariables != null && runParameterVariables.trim().length() > 0) {
+            String[] pars = runParameterVariables.split(",");
+            Map<String, String> vars = vr.getVars();
+            for(String par : pars) {
+                par = par.trim();
+                String value = vars.get(par);
+                if(value == null)
+                    value = vars.get(par.toUpperCase());
+                if(value != null) {
+                    if(runParameters == null)
+                        runParameters = new HashMap<String, String>();
+                    runParameters.put(par, value);
+                }
+            }
+        }
+
         String abortError = null;
         if(!runUsingonpremise && isBlank(runCompanyId)) {
             abortError = "Could not publish results to Testlab: Company ID is not set. Configure it for your job or globally in Jenkins' configuration.";
@@ -348,6 +374,7 @@ public class TestlabNotifier extends Notifier {
                 runTestTargetTitle,
                 runTestEnvironmentTitle,
                 runTags,
+                runParameters,
                 issuesSettings != null,
                 mergeAsSingleIssue,
                 reopenExisting,
@@ -655,6 +682,8 @@ public class TestlabNotifier extends Notifier {
                 ", milestone='" + milestone + '\'' +
                 ", testTargetTitle='" + testTargetTitle + '\'' +
                 ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +
+                ", tags='" + tags + '\'' +
+                ", parameters='" + parameters + '\'' +
                 ", issuesSettings=" + issuesSettings +
                 ", mergeAsSingleIssue=" + mergeAsSingleIssue +
                 ", assignToUser='" + assignToUser + '\'' +

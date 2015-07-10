@@ -58,6 +58,9 @@ public class TestResult extends ModelObject {
     @XmlElement
     private String tags;
 
+    @XmlElement(type = KeyValuePair.class)
+    private List<KeyValuePair> parameters;
+
     @XmlElement(type = TestCaseResult.class)
     private List<TestCaseResult> results;
 
@@ -289,6 +292,19 @@ public class TestResult extends ModelObject {
 
     public List<TestCaseResult> getResults() {
         return results;
+    }
+
+    /**
+     * Values to set to test case parameters if any.
+     *
+     * @return
+     */
+    public List<KeyValuePair> getParameters() {
+        return parameters;
+    }
+
+    public void setParameters(List<KeyValuePair> parameters) {
+        this.parameters = parameters;
     }
 
     /**

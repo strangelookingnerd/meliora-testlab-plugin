@@ -46,6 +46,8 @@ public class TestBase {
     public static final String FIELD_COMMENT = "_.comment";
     public static final String FIELD_TAGS = "_.tags";
 
+    public static final String FIELD_PARAMETERS = "_.parameters";
+
     /**
      * Asserts that a htmlinput is empty.
      *
