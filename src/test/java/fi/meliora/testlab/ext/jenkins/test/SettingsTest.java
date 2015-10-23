@@ -9,7 +9,7 @@ import org.jvnet.hudson.test.JenkinsRule;
 /**
  * Jenkins tests for testing meliora testlab plugin's settings.
  *
- * @author Marko Kanala, Meliora Ltd
+ * @author Meliora Ltd
  */
 public class SettingsTest extends TestBase {
 
@@ -100,7 +100,7 @@ public class SettingsTest extends TestBase {
     @Test
     public void testJobSettings() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject("test");
-        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null, null));
+        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null, null, null, null));
 
         JenkinsRule.WebClient client = getWebClient();
         client.login("admin", "admin");
@@ -127,6 +127,13 @@ public class SettingsTest extends TestBase {
         HtmlTextArea commentInput = form.getTextAreaByName(FIELD_COMMENT);
         HtmlTextInput tagsInput = form.getInputByName(FIELD_TAGS);
         HtmlTextInput parametersInput = form.getInputByName(FIELD_PARAMETERS);
+        HtmlCheckBoxInput publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
+        HtmlCheckBoxInput tapTestsAsStepsInput = form.getInputByName(FIELD_TAPTESTSASSTEPS);
+        HtmlCheckBoxInput tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
+        HtmlCheckBoxInput tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
+        HtmlTextInput tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
+        HtmlCheckBoxInput importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
+        HtmlTextInput importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
 
         assertEmpty(projectkeyInput);
         assertEmpty(testRunTitleInput);
@@ -150,6 +157,14 @@ public class SettingsTest extends TestBase {
         assertEmpty(tagsInput);
 
         assertEmpty(parametersInput);
+
+        assertChecked(publishTapInput, false);
+        assertChecked(tapTestsAsStepsInput, false);
+        assertChecked(tapFileNameInIdentifier, true);       // defaults to true
+        assertChecked(tapTestNumberInIdentifier, false);
+        assertEmpty(tapMappingPrefixInput);
+        assertChecked(importTestCasesInput, false);
+        assertEmpty(importTestCasesRootCategoryInput);
 
         //// set only required fields and assert save
 
@@ -177,6 +192,13 @@ public class SettingsTest extends TestBase {
         commentInput = form.getTextAreaByName(FIELD_COMMENT);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
+        publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
+        tapTestsAsStepsInput = form.getInputByName(FIELD_TAPTESTSASSTEPS);
+        tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
+        tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
+        tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
+        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
+        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -201,6 +223,14 @@ public class SettingsTest extends TestBase {
 
         assertEmpty(parametersInput);
 
+        assertChecked(publishTapInput, false);
+        assertChecked(tapTestsAsStepsInput, false);
+        assertChecked(tapFileNameInIdentifier, true);       // defaults to true
+        assertChecked(tapTestNumberInIdentifier, false);
+        assertEmpty(tapMappingPrefixInput);
+        assertChecked(importTestCasesInput, false);
+        assertEmpty(importTestCasesRootCategoryInput);
+
         //// set other optional fields and issues block and assert save
 
         milestoneInput.setValueAttribute("Milestone 1");
@@ -213,6 +243,14 @@ public class SettingsTest extends TestBase {
         commentInput.setText("comment text");
         tagsInput.setValueAttribute("jenkins tags");
         parametersInput.setValueAttribute("var1, var2");
+        publishTapInput.setChecked(true);
+        tapTestsAsStepsInput.setChecked(true);
+        tapFileNameInIdentifier.setChecked(false);
+        tapTestNumberInIdentifier.setChecked(true);
+        tapMappingPrefixInput.setValueAttribute("PREF");
+        importTestCasesInput.setChecked(true);
+        importTestCasesRootCategoryInput.setValueAttribute("RC");
+
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
         form = configurePage.getFormByName("config");
@@ -235,6 +273,13 @@ public class SettingsTest extends TestBase {
         commentInput = form.getTextAreaByName(FIELD_COMMENT);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
+        publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
+        tapTestsAsStepsInput = form.getInputByName(FIELD_TAPTESTSASSTEPS);
+        tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
+        tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
+        tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
+        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
+        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -256,6 +301,14 @@ public class SettingsTest extends TestBase {
         assertHasValue(tagsInput, "jenkins tags");
 
         assertHasValue(parametersInput, "var1, var2");
+
+        assertChecked(publishTapInput, true);
+        assertChecked(tapTestsAsStepsInput, true);
+        assertChecked(tapFileNameInIdentifier, false);
+        assertChecked(tapTestNumberInIdentifier, true);
+        assertHasValue(tapMappingPrefixInput, "PREF");
+        assertChecked(importTestCasesInput, true);
+        assertHasValue(importTestCasesRootCategoryInput, "RC");
 
         //// set advanced setting fields and assert save
 
@@ -287,6 +340,13 @@ public class SettingsTest extends TestBase {
         commentInput = form.getTextAreaByName(FIELD_COMMENT);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
+        publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
+        tapTestsAsStepsInput = form.getInputByName(FIELD_TAPTESTSASSTEPS);
+        tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
+        tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
+        tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
+        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
+        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -310,6 +370,14 @@ public class SettingsTest extends TestBase {
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
         assertHasValue(apiKeyInput, "1010101010303030");
         assertHasValue(testCaseMappingFieldInput, "Other field");
+
+        assertChecked(publishTapInput, true);
+        assertChecked(tapTestsAsStepsInput, true);
+        assertChecked(tapFileNameInIdentifier, false);
+        assertChecked(tapTestNumberInIdentifier, true);
+        assertHasValue(tapMappingPrefixInput, "PREF");
+        assertChecked(importTestCasesInput, true);
+        assertHasValue(importTestCasesRootCategoryInput, "RC");
     }
 
 }

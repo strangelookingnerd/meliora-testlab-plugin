@@ -16,7 +16,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * Base class for all unit tests.
  *
- * @author Marko Kanala
+ * @author Meliora Ltd
  */
 public class TestBase {
     @Rule
@@ -39,6 +39,15 @@ public class TestBase {
     public static final String FIELD_ONPREMISEURL = "_.onpremiseurl";
     public static final String FIELD_APIKEY = "_.apiKey";
     public static final String FIELD_TESTCASEMAPPINGFIELD = "_.testCaseMappingField";
+
+    public static final String FIELD_BLOCK_PUBLISHTAP = "_.publishTap";
+    public static final String FIELD_TAPTESTSASSTEPS = "_.tapTestsAsSteps";
+    public static final String FIELD_TAPFILENAMEINIDENTIFIER = "_.tapFileNameInIdentifier";
+    public static final String FIELD_TAPTESTNUMBERINIDENTIFIER = "_.tapTestNumberInIdentifier";
+    public static final String FIELD_TAPMAPPINGPREFIX = "_.tapMappingPrefix";
+
+    public static final String FIELD_BLOCK_IMPORTTESTCASES = "_.importTestCases";
+    public static final String FIELD_IMPORTTESTCASESROOTCATEGORY = "_.importTestCasesRootCategory";
 
     public static final String FIELD_CORS = "_.cors";
     public static final String FIELD_ORIGIN = "_.origin";

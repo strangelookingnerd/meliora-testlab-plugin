@@ -7,6 +7,8 @@ import java.util.logging.Logger;
 
 /**
  * A simple replacer class to replace tags with build environment variables in a String.
+ *
+ * @author Meliora Ltd
  */
 public class VariableReplacer {
     private final static Logger log = Logger.getLogger(VariableReplacer.class.getName());

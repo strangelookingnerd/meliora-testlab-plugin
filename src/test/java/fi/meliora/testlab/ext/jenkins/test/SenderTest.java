@@ -1,12 +1,8 @@
 package fi.meliora.testlab.ext.jenkins.test;
 
 import fi.meliora.testlab.ext.jenkins.TestlabNotifier;
-import hudson.maven.MavenModuleSet;
-import hudson.maven.MavenModuleSetBuild;
-import hudson.maven.settings.SettingConfig;
 import hudson.model.FreeStyleBuild;
 import hudson.model.FreeStyleProject;
-import hudson.model.queue.QueueTaskFuture;
 import hudson.tasks.Maven;
 import hudson.tasks.Shell;
 import hudson.tasks.junit.JUnitResultArchiver;
@@ -20,7 +16,7 @@ import static org.junit.Assert.*;
 /**
  * Jenkins tests for running a dummy plugin run for a test project.
  *
- * @author Marko Kanala, Meliora Ltd
+ * @author Meliora Ltd
  */
 public class SenderTest extends TestBase {
 
@@ -101,7 +97,9 @@ public class SenderTest extends TestBase {
                         "jenkins test",
                         null,
                         null,
-                        advancedSettings
+                        advancedSettings,
+                        null,
+                        null
                 )
         );
 
