@@ -1,0 +1,23 @@
+<div>
+    <p>
+        When mapping test results to test cases in Testlab test cases are set with a mapping
+        identifier for which the results are mapped against. By entering a value to this setting
+        the constructed mapping identifiers for TAP results are prefixed with this value.
+    </p>
+    <p>
+        For example, when this option is entered with value "automated." and the tests are in a file named as "my-tests.tap" the mapping
+        identifiers for
+    </p>
+    <pre>
+        1..2
+        ok 1 first test
+        not ok 2 second test
+    </pre>
+    <p>
+        are structured as follows (Include TAP file name in mapping identifier: Yes, Include test number from mapping identifier: No):
+    </p>
+    <ul>
+        <li>automated.my-tests_tap.first test</li>
+        <li>automated.my-tests_tap.second test</li>
+    </ul>
+</div>

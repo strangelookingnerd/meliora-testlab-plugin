@@ -64,6 +64,9 @@ public class TestResult extends ModelObject {
     @XmlElement(type = TestCaseResult.class)
     private List<TestCaseResult> results;
 
+    @XmlElement
+    private String xml;
+
     // control fields
 
     @XmlElement
@@ -77,6 +80,11 @@ public class TestResult extends ModelObject {
     private boolean reopenExistingIssues;
     @XmlElement
     private String assignIssuesToUser;
+
+    @XmlElement
+    private boolean importTestCases;
+    @XmlElement
+    private String importTestCasesRootCategory;
 
     public Long getProjectId() {
         return projectId;
@@ -366,5 +374,46 @@ public class TestResult extends ModelObject {
      */
     public void setAssignIssuesToUser(String assignIssuesToUser) {
         this.assignIssuesToUser = assignIssuesToUser;
+    }
+
+    public String getXml() {
+        return xml;
+    }
+
+    /**
+     * JUnit compatible xml content for results. If results are delivered in results
+     * field this field is ignored.
+     *
+     * @param xml
+     */
+    public void setXml(String xml) {
+        this.xml = xml;
+    }
+
+    public boolean isImportTestCases() {
+        return importTestCases;
+    }
+
+    /**
+     * If set implies that test cases which are not found via the mapping identifier
+     * should be automatically created during the push.
+     *
+     * @param importTestCases
+     */
+    public void setImportTestCases(boolean importTestCases) {
+        this.importTestCases = importTestCases;
+    }
+
+    public String getImportTestCasesRootCategory() {
+        return importTestCasesRootCategory;
+    }
+
+    /**
+     * If set, sets the root category path where the test cases are created. By default, "Import".
+     *
+     * @param importTestCasesRootCategory
+     */
+    public void setImportTestCasesRootCategory(String importTestCasesRootCategory) {
+        this.importTestCasesRootCategory = importTestCasesRootCategory;
     }
 }

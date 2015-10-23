@@ -23,7 +23,7 @@ import java.util.logging.Logger;
 /**
  * A post build action to publish test results to Meliora Testlab.
  *
- * @author Marko Kanala, Meliora Ltd
+ * @author Meliora Ltd
  */
 public class TestlabNotifier extends Notifier {
     private final static Logger log = Logger.getLogger(TestlabNotifier.class.getName());
@@ -160,12 +160,61 @@ public class TestlabNotifier extends Notifier {
         return usingonpremise;
     }
 
+    // if set, publish TAP results
+    private PublishTap publishTap;
+
+    public PublishTap getPublishTap() {
+        return publishTap;
+    }
+
+    // If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file
+    private boolean tapTestsAsSteps;
+
+    public boolean isTapTestsAsSteps() {
+        return tapTestsAsSteps;
+    }
+
+    // If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix
+    private boolean tapFileNameInIdentifier;
+
+    public boolean isTapFileNameInIdentifier() {
+        return tapFileNameInIdentifier;
+    }
+
+    // If set, the mapping identifier will not include the test number of the TAP test
+    private boolean tapTestNumberInIdentifier;
+
+    public boolean isTapTestNumberInIdentifier() {
+        return tapTestNumberInIdentifier;
+    }
+
+    // If set, mapping identifiers sent will be prefixed with this value
+    private String tapMappingPrefix;
+
+    public String getTapMappingPrefix() {
+        return tapMappingPrefix;
+    }
+
+    // if set, automatically creates test cases when publishing
+    public ImportTestCases importTestCases;
+
+    public ImportTestCases getImportTestCases() {
+        return importTestCases;
+    }
+
+    // If set, sets the root category path where the test cases are created. By default, "Import".
+    private String importTestCasesRootCategory;
+
+    public String getImportTestCasesRootCategory() {
+        return importTestCasesRootCategory;
+    }
+
     /**
      * This annotation tells Hudson to call this constructor, with
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings) {
+    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings, PublishTap publishTap, ImportTestCases importTestCases) {
         this.projectKey = projectKey;
         this.testRunTitle = testRunTitle;
         this.comment = comment;
@@ -188,6 +237,19 @@ public class TestlabNotifier extends Notifier {
             this.apiKey = advancedSettings.getApiKey();
             this.testCaseMappingField = advancedSettings.getTestCaseMappingField();
             this.usingonpremise = advancedSettings.getUsingonpremise();
+        }
+
+        this.publishTap = publishTap;
+        if(publishTap != null) {
+            this.tapFileNameInIdentifier = publishTap.isTapFileNameInIdentifier();
+            this.tapTestNumberInIdentifier = publishTap.isTapTestNumberInIdentifier();
+            this.tapTestsAsSteps = publishTap.isTapTestsAsSteps();
+            this.tapMappingPrefix = publishTap.getTapMappingPrefix();
+        }
+
+        this.importTestCases = importTestCases;
+        if(importTestCases != null) {
+            this.importTestCasesRootCategory = importTestCases.getImportTestCasesRootCategory();
         }
     }
 
@@ -332,6 +394,8 @@ public class TestlabNotifier extends Notifier {
             }
         }
 
+        String runTapMappingPrefix = vr.replace(tapMappingPrefix);
+
         String abortError = null;
         if(!runUsingonpremise && isBlank(runCompanyId)) {
             abortError = "Could not publish results to Testlab: Company ID is not set. Configure it for your job or globally in Jenkins' configuration.";
@@ -379,6 +443,13 @@ public class TestlabNotifier extends Notifier {
                 mergeAsSingleIssue,
                 reopenExisting,
                 !isBlank(runAssignToUser) ? runAssignToUser : null,
+                publishTap != null,
+                tapTestsAsSteps,
+                tapFileNameInIdentifier,
+                tapTestNumberInIdentifier,
+                runTapMappingPrefix,
+                importTestCases != null,
+                importTestCasesRootCategory,
                 runTestCaseMappingField,
                 build
         );
@@ -667,6 +738,85 @@ public class TestlabNotifier extends Notifier {
     }
 
     /**
+     * Optional job config block for TAP support.
+     *
+     * If set implicitly implies that TAP results should be published to Testlab.
+     */
+    public static final class PublishTap {
+        // If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file
+        private boolean tapTestsAsSteps;
+
+        // If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix
+        private boolean tapFileNameInIdentifier;
+
+        // If set, the mapping identifier will not include the test number of the TAP test
+        private boolean tapTestNumberInIdentifier;
+
+        // If set, mapping identifiers sent will be prefixed with this value
+        private String tapMappingPrefix;
+
+        public boolean isTapFileNameInIdentifier() {
+            return tapFileNameInIdentifier;
+        }
+
+        public boolean isTapTestNumberInIdentifier() {
+            return tapTestNumberInIdentifier;
+        }
+
+        public boolean isTapTestsAsSteps() {
+            return tapTestsAsSteps;
+        }
+
+        public String getTapMappingPrefix() {
+            return tapMappingPrefix;
+        }
+
+        @DataBoundConstructor
+        public PublishTap(boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, boolean tapTestsAsSteps, String tapMappingPrefix) {
+            this.tapFileNameInIdentifier = tapFileNameInIdentifier;
+            this.tapTestNumberInIdentifier = tapTestNumberInIdentifier;
+            this.tapTestsAsSteps = tapTestsAsSteps;
+            this.tapMappingPrefix = tapMappingPrefix;
+        }
+
+        @Override
+        public String toString() {
+            return "PublishTap{" +
+                    "tapFileNameInIdentifier=" + tapFileNameInIdentifier +
+                    ", tapTestsAsSteps=" + tapTestsAsSteps +
+                    ", tapTestNumberInIdentifier=" + tapTestNumberInIdentifier +
+                    ", tapMappingPrefix=" + tapMappingPrefix +
+                    '}';
+        }
+    }
+
+    /**
+     * Optional job config block for auto-creating test cases.
+     *
+     * If set implicitly implies that test cases should be automatically created during the push.
+     */
+    public static final class ImportTestCases {
+        // If set, sets the root category path where the test cases are created. By default, "Import".
+        private String importTestCasesRootCategory;
+
+        public String getImportTestCasesRootCategory() {
+            return importTestCasesRootCategory;
+        }
+
+        @DataBoundConstructor
+        public ImportTestCases(String importTestCasesRootCategory) {
+            this.importTestCasesRootCategory = importTestCasesRootCategory;
+        }
+
+        @Override
+        public String toString() {
+            return "ImportTestCases{" +
+                    "importTestCasesRootCategory='" + importTestCasesRootCategory + '\'' +
+                    '}';
+        }
+    }
+
+    /**
      * @return true if trimmed String is empty
      */
     public static boolean isBlank(String s) {
@@ -693,6 +843,8 @@ public class TestlabNotifier extends Notifier {
                 ", apiKey='hidden'" +
                 ", testCaseMappingField='" + testCaseMappingField + '\'' +
                 ", usingonpremise=" + usingonpremise +
+                ", publishTap=" + publishTap +
+                ", importTestCases=" + importTestCases +
                 '}';
     }
 }

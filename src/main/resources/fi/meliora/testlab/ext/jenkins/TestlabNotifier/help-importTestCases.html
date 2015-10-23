@@ -1,0 +1,20 @@
+<div>
+    <p>
+        If set, when publishing the testing results to Testlab the test cases will be
+        automatically created to the Testlab project if they are missing. A missing test case
+        is a one which is not found via the mapping identifier constructed for the automated test.
+    </p>
+    <p>
+        Test cases will be imported to test categories according to the mapping
+        identifier (see "Test case mapping field").
+        For example, if the mapping identifier constructed for the test is "com.mycompany.SomeTest",
+        and a test case is not found mapped to this identifier, a test case named "SomeTest" will be
+        created to
+    </p>
+    <pre>
+        Import/com/mycompany
+    </pre>
+    <p>
+        .. category.
+    </p>
+</div>

@@ -5,14 +5,19 @@ import fi.meliora.testlab.ext.crest.TestResultResource;
 import fi.meliora.testlab.ext.rest.model.AddTestResultResponse;
 import fi.meliora.testlab.ext.rest.model.KeyValuePair;
 import fi.meliora.testlab.ext.rest.model.TestCaseResult;
+import fi.meliora.testlab.ext.rest.model.TestCaseResultStep;
 import hudson.model.AbstractBuild;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
+import org.apache.commons.lang.StringUtils;
+import org.tap4j.plugin.model.TapTestResultResult;
 
+import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -21,7 +26,7 @@ import java.util.logging.Logger;
 /**
  * Sends jenkins test results to Testlab.
  *
- * @author Marko Kanala, Meliora Ltd
+ * @author Meliora Ltd
  */
 public class Sender {
     /**
@@ -60,14 +65,34 @@ public class Sender {
      * @param mergeAsSingleIssue
      * @param reopenExisting
      * @param assignToUser
+     * @param publishTap
+     * @param tapTestsAsSteps,
+     * @param tapFileNameInIdentifier,
+     * @param tapTestNumberInIdentifier
+     * @param importTestCases
+     * @param importTestCasesRootCategory
      * @param testCaseMappingField
      * @param build
      */
-    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone, String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags, Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser, String testCaseMappingField, AbstractBuild<?, ?> build) {
+    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone,
+                                   String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
+                                   Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser,
+                                   boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
+                                   boolean importTestCases, String importTestCasesRootCategory,
+                                   String testCaseMappingField, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", [" + parameters + "], " + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser + ", " + testCaseMappingField);
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone
+                    + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", [" + parameters + "], "
+                    + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser
+                    + ", " + publishTap + ", " + tapTestsAsSteps + ", " + tapFileNameInIdentifier + ", " + tapTestNumberInIdentifier + ", " + tapMappingPrefix
+                    + ", " + importTestCases + ", " + importTestCasesRootCategory
+                    + ", " + testCaseMappingField
+            );
+
+        if(log.isLoggable(Level.FINE))
+            log.fine("tap-plugin installed ? : " + (hasTAPSupport() ? "Yes, we have TAP support." : "No, no TAP support available."));
 
         // parse test results
         AbstractTestResultAction ra = build.getAction(AbstractTestResultAction.class);
@@ -96,6 +121,8 @@ public class Sender {
             data.setTestCaseMappingField(testCaseMappingField);
             data.setUser(user);
             data.setComment(comment);
+            data.setImportTestCases(importTestCases);
+            data.setImportTestCasesRootCategory(importTestCasesRootCategory);
             if(parameters != null && parameters.size() > 0) {
                 List<KeyValuePair> parameterValues = new ArrayList<KeyValuePair>();
                 for(String name : parameters.keySet()) {
@@ -127,11 +154,11 @@ public class Sender {
                         Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
                         if(log.isLoggable(Level.FINE))
                             log.fine("Have child results: " + childResultObject);
-                        parseResult(build, childResultObject, results, user);
+                        parseResult(build, childResultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
                     }
                 }
             } else {
-                parseResult(build, resultObject, results, user);
+                parseResult(build, resultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
             }
 
             if(results.size() > 0) {
@@ -154,7 +181,8 @@ public class Sender {
         }
     }
 
-    protected static void parseResult(AbstractBuild<?, ?> build, Object resultObject, final List<TestCaseResult> results, String user) {
+    protected static void parseResult(AbstractBuild<?, ?> build, Object resultObject, final List<TestCaseResult> results, String user,
+                                      boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix) {
         if(resultObject instanceof hudson.tasks.test.TestResult) {
             TestResult result = (TestResult)resultObject;
             if(log.isLoggable(Level.FINE))
@@ -189,6 +217,156 @@ public class Sender {
                         results.add(getTestCaseResult(build, id, res, msg, stacktrace, user, cr.getDuration()));
                     }
                 }
+            } else if (hasTAPSupport() && publishTap && result instanceof org.tap4j.plugin.model.TapStreamResult) {
+
+                if(log.isLoggable(Level.FINE))
+                    log.fine("Detected tap-plugin result object.");
+
+                org.tap4j.plugin.model.TapStreamResult tsr = (org.tap4j.plugin.model.TapStreamResult)result;
+
+                for(TestResult tr : tsr.getChildren()) {
+                    TapTestResultResult r = (TapTestResultResult)tr;
+
+                    // see https://testanything.org/tap-specification.html
+
+/*
+                    log.info(" - " + r);
+                    log.info(" -- " + r.getDisplayName());
+                    log.info(" --- " + r.getTitle());
+                    log.info(" ---- " + r.getStatus());
+                    log.info(" ----- " + r.getDescription());
+                    log.info(" ------ " + r.getSafeName());
+                    log.info(" ------- " + r.getDuration());
+                    log.info(" -------- " + r.getTodo());
+                    log.info(" --------- " + r.getSkip());
+*/
+
+                    try {
+                        //// parse tap test name
+
+                        log.fine("TAP RESULT: " + r);
+
+                        // 18 - 2Flume Version Check
+                        String tapTest = r.getTitle();
+                        if(!tapTestNumberInIdentifier) {
+                            if(tapTest.contains(" - ")) {
+                                tapTest = tapTest.substring(tapTest.indexOf(" - ") + 3);
+                            }
+                        }
+
+                        //// parse tap file name
+
+                        // tapfiles/second-hadoop-components.tap-18
+                        String fileName = URLDecoder.decode(r.getSafeName(), "UTF-8");
+                        int slash = fileName.lastIndexOf('/');
+                        if(slash > -1) {
+                            // second-hadoop-components.tap-18
+                            fileName = fileName.substring(slash + 1);
+                        }
+                        // second-hadoop-components.tap
+                        fileName = fileName.substring(0, fileName.lastIndexOf('-'));
+
+                        //// determine result
+
+                        int testResult;
+                        if("Yes".equals(r.getSkip())) {
+                            testResult = TestCaseResult.RESULT_SKIP;
+//                        } else if("Yes".equals(r.getTodo())) {
+//                            // These tests represent a feature to be implemented or a
+//                            // bug to be fixed and act as something of an executable
+//                            // "things to do" list. They are not expected to succeed.
+//                            // Should a todo test point begin succeeding, the harness
+//                            // should report it as a bonus. This indicates that whatever
+//                            // you were supposed to do has been done and you should promote
+//                            // this to a normal test point.
+
+                            // => we just report the todo directived results by their status
+
+                        } else if("OK".equals(r.getStatus())) {
+                            testResult = TestCaseResult.RESULT_PASS;
+                        } else {
+                            // fail tests by default ("NOT OK")
+                            testResult = TestCaseResult.RESULT_FAIL;
+                        }
+
+                        log.fine(" TAP test result: " + testResult);
+
+                        if(!tapTestsAsSteps) {
+                            //// regular publish, map each tap line to a test case
+
+                            // construct test identifier
+
+                            String id;
+                            if(tapFileNameInIdentifier) {
+                                id = fileName.replaceAll("\\.", "_") + "." + tapTest;
+                            } else {
+                                id = tapTest;
+                            }
+                            if(!StringUtils.isBlank(tapMappingPrefix)) {
+                                id = tapMappingPrefix + id;
+                            }
+
+                            log.fine(" TAP identifier parsed: " + id);
+
+                            results.add(getTestCaseResult(build, id, testResult, r.toString(), r.getErrorStackTrace(), user, r.getDuration()));
+                        } else {
+                            //// publish tap lines as test case steps
+
+                            // construct test identifier
+
+                            String id = fileName.replaceAll("\\.", "_");
+                            if(!StringUtils.isBlank(tapMappingPrefix)) {
+                                id = tapMappingPrefix + id;
+                            }
+
+                            log.fine(" TAP identifier parsed: " + id);
+
+                            // if we already have a result parsed, peek it
+                            TestCaseResult testCaseResult = null;
+                            for(TestCaseResult tcr : results) {
+                                if(id.equals(tcr.getMappingId())) {
+                                    testCaseResult = tcr;
+                                    break;
+                                }
+                            }
+
+                            if(testCaseResult == null) {
+                                testCaseResult = getTestCaseResult(build, id, testResult, "", "", user, r.getDuration());
+                                results.add(testCaseResult);
+                            }
+
+                            TestCaseResultStep testCaseResultStep = new TestCaseResultStep();
+                            testCaseResultStep.setResult(testResult);
+                            testCaseResultStep.setDescription(tapTest);
+                            testCaseResultStep.setComment(r.toString());
+                            //testCaseResultStep.setExpected("");
+
+                            List<TestCaseResultStep> steps = testCaseResult.getSteps();
+                            if(steps == null) {
+                                steps = new ArrayList<TestCaseResultStep>();
+                                testCaseResult.setSteps(steps);
+                            }
+                            steps.add(testCaseResultStep);
+
+                            // we prefer to fail test cases if even one step is NOT OK
+                            if(testResult == TestCaseResult.RESULT_FAIL) {
+                                testCaseResult.setResult(TestCaseResult.RESULT_FAIL);
+                            }
+
+                            // construct test case result comment from step comments
+                            String testCaseResultComment = testCaseResult.getComment();
+                            if(testCaseResultComment.length() > 0)
+                                testCaseResultComment += "\n";
+                            testCaseResultComment += testCaseResultStep.getComment();
+                            testCaseResult.setComment(testCaseResultComment);
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        log.warning("Could not parse TAP result row: " + r);
+                    }
+                }
+
             } else {
 
                 //// a generic test result, try to parse it
@@ -236,6 +414,15 @@ public class Sender {
             r.setComment(comment.toString());
         }
         return r;
+    }
+
+    public static boolean hasTAPSupport() {
+        try {
+            Class.forName("org.tap4j.plugin.model.TapStreamResult");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
     }
 
 }

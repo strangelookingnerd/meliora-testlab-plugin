@@ -86,6 +86,47 @@
 
     </f:optionalBlock>
 
+    <f:optionalBlock field="importTestCases" title="Automatically create test cases"
+                     checked="${not empty instance.importTestCases}">
+        <f:entry
+                title="Import category"
+                description="Test category where the automatically created test cases will be created to. Defaults to 'Import'."
+                field="importTestCasesRootCategory">
+            <f:textbox />
+        </f:entry>
+    </f:optionalBlock>
+
+    <f:optionalBlock field="publishTap" title="Publish TAP results"
+                     checked="${not empty instance.publishTap}">
+        <f:entry
+                title="Publish TAP tests as test case steps ?"
+                description="If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file. By default (when not set), each test in TAP file will be mapped to a separate test case in Testlab."
+                field="tapTestsAsSteps">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry
+                title="Include TAP file name in mapping identifier ?"
+                description="If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix. Please note, that all dots in the name of the file are replaced with underscores."
+                field="tapFileNameInIdentifier">
+            <f:checkbox checked="${h.defaultToTrue(instance.publishTap.tapFileNameInIdentifier)}" />
+        </f:entry>
+
+        <f:entry
+                title="Include test number in mapping identifier ?"
+                description="If set, the mapping identifier will include the test number of the TAP test."
+                field="tapTestNumberInIdentifier">
+            <f:checkbox />
+        </f:entry>
+
+        <f:entry
+                title="Mapping identifier prefix"
+                description="If set, mapping identifiers sent will be prefixed with this value."
+                field="tapMappingPrefix">
+            <f:textbox />
+        </f:entry>
+    </f:optionalBlock>
+
     <f:optionalBlock field="advancedSettings" title="Advanced settings"
                      checked="${not empty instance.advancedSettings}">
 

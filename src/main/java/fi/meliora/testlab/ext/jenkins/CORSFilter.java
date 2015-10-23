@@ -12,7 +12,7 @@ import java.util.logging.Logger;
  * Adds CORS headers to Jenkins response. Adapted from CORS-filter and included in
  * this plugin because the original plugin is not published in public repositories.
  *
- * @author Marko Kanala
+ * @author Meliora Ltd
  */
 public class CORSFilter implements Filter {
     private final static Logger log = Logger.getLogger(CORSFilter.class.getName());

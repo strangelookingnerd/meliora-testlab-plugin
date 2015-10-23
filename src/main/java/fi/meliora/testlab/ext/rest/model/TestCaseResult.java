@@ -4,6 +4,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import java.util.List;
 
 /**
  * Encapsulates a single inbound result of a test case.
@@ -19,26 +20,20 @@ public class TestCaseResult extends ModelObject {
     public final static int RESULT_SKIP = 3;
     public final static int RESULT_BLOCK = 4;
 
-    @XmlElement
     private Long testCaseId;
-    @XmlElement
     private String mappingId;
 
-    @XmlElement
     private int result;
 
-    @XmlElement
     private Long started;
-    @XmlElement
     private Long run;
 
-    @XmlElement
     private Long runById;
-    @XmlElement
     private String runBy;
 
-    @XmlElement
     private String comment;
+
+    private List<TestCaseResultStep> steps;
 
     public Long getTestCaseId() {
         return testCaseId;
@@ -146,4 +141,16 @@ public class TestCaseResult extends ModelObject {
         this.comment = comment;
     }
 
+    /**
+     * Optional execution steps and their results for this result.
+     *
+     * @return
+     */
+    public List<TestCaseResultStep> getSteps() {
+        return steps;
+    }
+
+    public void setSteps(List<TestCaseResultStep> steps) {
+        this.steps = steps;
+    }
 }

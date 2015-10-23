@@ -1,0 +1,21 @@
+<div>
+    <p>
+        The results of tests in TAP files are prefixed with a test number in ascending order.
+        When this option is checked, this number will be included in the mapping identifier
+        Testlab will use to map the TAP tests to Testlab's test cases.
+    </p>
+    <p>
+        For example, when this option is checked and the tests are in a file named as "my-tests.tap" the mapping
+        identifiers for
+        <pre>
+            1..2
+            ok 1 first test
+            not ok 2 second test
+        </pre>
+        are structured as follows (Include TAP file name in mapping identifier: Yes):
+    </p>
+    <ul>
+        <li>my-tests_tap.1 first test</li>
+        <li>my-tests_tap.2 second test</li>
+    </ul>
+</div>

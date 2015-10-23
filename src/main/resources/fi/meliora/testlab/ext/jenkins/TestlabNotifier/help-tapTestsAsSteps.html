@@ -1,0 +1,55 @@
+<div>
+    <p>
+        By default, this plugin will publish and map each test line in a TAP file to a test case
+        in Testlab.
+    </p>
+    <p>
+        For example, when the tests are in a file named as "my-tests.tap"
+        (Include TAP file name in mapping identifier: Yes, Include test number from mapping identifier: No) as:
+    </p>
+        <pre>
+            1..2
+            ok 1 first test
+            not ok 2 second test
+        </pre>
+    <p>
+        .. the tests will be mapped in Testlab to test cases as:
+    </p>
+    <ul>
+        <li>my-tests_tap.first test => mapped to a first test case</li>
+        <li>my-tests_tap.second test => mapped to a second test case</li>
+    </ul>
+    <p>
+        When this option is checked, only the TAP file will be mapped to a test case in Testlab
+        and each test line in the file will be imported as an execution step to these test cases.
+        With the set up exampled above, the tests will be mapped in Testlab to test cases as:
+    </p>
+    <ul>
+        <li>my-tests_tap => mapped to a test case</li>
+    </ul>
+    <p>
+        .. and the execution steps of the test case will be overwritten with the test lines from the TAP file.
+    </p>
+    <p>
+        <strong>
+            Please note, that
+        </strong>
+    </p>
+    <ul>
+        <li>
+            the publish will overwrite and replace all execution steps in the mapped test case,
+        </li>
+        <li>
+            the steps will be updated ONLY for the test case with exact mapping
+            (in the above example in Testlab, a test case with mapping identifier "my-tests_tap" must exist),
+        </li>
+        <li>
+            the testing result of the test case is set as failed if one or more test lines in the TAP
+            file are reported as NOT OK and
+        </li>
+        <li>
+            reporting-wise in Testlab, only the result of the test case matters. Execution results
+            of the individual steps are only informational.
+        </li>
+    </ul>
+</div>
