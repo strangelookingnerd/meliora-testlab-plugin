@@ -1,5 +1,7 @@
 package fi.meliora.testlab.ext.rest.model;
 
+import org.codehaus.jackson.annotate.JsonIgnoreProperties;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -13,6 +15,7 @@ import java.util.List;
  */
 @XmlRootElement
 @XmlAccessorType(XmlAccessType.FIELD)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TestResult extends ModelObject {
     public static final int STATUS_NOTSTARTED = 0;
     public static final int STATUS_STARTED = 1;
