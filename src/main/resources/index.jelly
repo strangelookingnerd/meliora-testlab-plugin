@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <!--
   This is shown in manage plugins - plugin listing.
 -->
