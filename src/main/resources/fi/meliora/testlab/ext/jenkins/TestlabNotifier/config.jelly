@@ -96,6 +96,23 @@
         </f:entry>
     </f:optionalBlock>
 
+    <f:optionalBlock field="publishRobot" title="Publish Robot Framework results"
+                     checked="${not empty instance.publishRobot}">
+        <f:entry
+                title="Robot output xml file"
+                description="Path to the Robot Framework's output xml file (relative to build workspace)."
+                field="robotOutput">
+            <f:textbox default="**/output.xml" />
+        </f:entry>
+
+        <f:entry
+                title="Catenate parent keywords in steps ?"
+                description="If set, all keywords and their sub keywords are catenated to a single step in the result when possible."
+                field="robotCatenateParentKeywords">
+            <f:checkbox checked="${h.defaultToTrue(instance.publishRobot.robotCatenateParentKeywords)}" />
+        </f:entry>
+    </f:optionalBlock>
+
     <f:optionalBlock field="publishTap" title="Publish TAP results"
                      checked="${not empty instance.publishTap}">
         <f:entry

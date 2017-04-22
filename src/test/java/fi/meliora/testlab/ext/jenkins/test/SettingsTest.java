@@ -100,7 +100,7 @@ public class SettingsTest extends TestBase {
     @Test
     public void testJobSettings() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject("test");
-        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null, null, null, null));
+        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null, null, null, null, null));
 
         JenkinsRule.WebClient client = getWebClient();
         client.login("admin", "admin");
@@ -134,6 +134,9 @@ public class SettingsTest extends TestBase {
         HtmlTextInput tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
         HtmlCheckBoxInput importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
         HtmlTextInput importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
+        HtmlCheckBoxInput publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
+        HtmlTextInput robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
+        HtmlCheckBoxInput robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertEmpty(projectkeyInput);
         assertEmpty(testRunTitleInput);
@@ -165,6 +168,10 @@ public class SettingsTest extends TestBase {
         assertEmpty(tapMappingPrefixInput);
         assertChecked(importTestCasesInput, false);
         assertEmpty(importTestCasesRootCategoryInput);
+
+        assertChecked(publishRobotInput, false);
+        assertHasValue(robotOutputInput, "**/output.xml");
+        assertChecked(robotCatenateParentKeywordsInput, true);
 
         //// set only required fields and assert save
 
@@ -199,6 +206,9 @@ public class SettingsTest extends TestBase {
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
         importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
         importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
+        publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
+        robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
+        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -231,6 +241,10 @@ public class SettingsTest extends TestBase {
         assertChecked(importTestCasesInput, false);
         assertEmpty(importTestCasesRootCategoryInput);
 
+        assertChecked(publishRobotInput, false);
+        assertHasValue(robotOutputInput, "**/output.xml");
+        assertChecked(robotCatenateParentKeywordsInput, true);
+
         //// set other optional fields and issues block and assert save
 
         milestoneInput.setValueAttribute("Milestone 1");
@@ -250,6 +264,9 @@ public class SettingsTest extends TestBase {
         tapMappingPrefixInput.setValueAttribute("PREF");
         importTestCasesInput.setChecked(true);
         importTestCasesRootCategoryInput.setValueAttribute("RC");
+        publishRobotInput.setChecked(true);
+        robotOutputInput.setValueAttribute("results/output2.xml");
+        robotCatenateParentKeywordsInput.setChecked(false);
 
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
@@ -280,6 +297,9 @@ public class SettingsTest extends TestBase {
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
         importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
         importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
+        publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
+        robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
+        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -309,6 +329,10 @@ public class SettingsTest extends TestBase {
         assertHasValue(tapMappingPrefixInput, "PREF");
         assertChecked(importTestCasesInput, true);
         assertHasValue(importTestCasesRootCategoryInput, "RC");
+
+        assertChecked(publishRobotInput, true);
+        assertHasValue(robotOutputInput, "results/output2.xml");
+        assertChecked(robotCatenateParentKeywordsInput, false);
 
         //// set advanced setting fields and assert save
 
@@ -347,6 +371,9 @@ public class SettingsTest extends TestBase {
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
         importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
         importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
+        publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
+        robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
+        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
         assertHasValue(testRunTitleInput, "Test run");
@@ -378,6 +405,10 @@ public class SettingsTest extends TestBase {
         assertHasValue(tapMappingPrefixInput, "PREF");
         assertChecked(importTestCasesInput, true);
         assertHasValue(importTestCasesRootCategoryInput, "RC");
+
+        assertChecked(publishRobotInput, true);
+        assertHasValue(robotOutputInput, "results/output2.xml");
+        assertChecked(robotCatenateParentKeywordsInput, false);
     }
 
 }

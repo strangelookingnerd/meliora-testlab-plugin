@@ -38,7 +38,7 @@ public class CORSFilter implements Filter {
 
     private static final String CORS_HANDLE_OPTIONS_METHOD = System.getProperty("cors.options", "true");
     private static final String CORS_METHODS = System.getProperty("cors.methods", "GET, POST, PUT, DELETE");
-    private static final String CORS_HEADERS = System.getProperty("cors.headers", "Authorization, .crumb, Origin");
+    private static final String CORS_HEADERS = System.getProperty("cors.headers", "Authorization, .crumb, Origin, Jenkins-Crumb");
     private static final String CORS_CREDENTIALS = System.getProperty("cors.credentials", "true");
 
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)

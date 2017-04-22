@@ -49,6 +49,10 @@ public class TestBase {
     public static final String FIELD_BLOCK_IMPORTTESTCASES = "_.importTestCases";
     public static final String FIELD_IMPORTTESTCASESROOTCATEGORY = "_.importTestCasesRootCategory";
 
+    public static final String FIELD_BLOCK_PUBLISHROBOT = "_.publishRobot";
+    public static final String FIELD_ROBOTOUTPUT = "_.robotOutput";
+    public static final String FIELD_ROBOTCATENATEPARENTKEYWORDS = "_.robotCatenateParentKeywords";
+
     public static final String FIELD_CORS = "_.cors";
     public static final String FIELD_ORIGIN = "_.origin";
 

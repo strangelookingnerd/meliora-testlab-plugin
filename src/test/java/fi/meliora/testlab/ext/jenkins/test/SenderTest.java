@@ -99,6 +99,7 @@ public class SenderTest extends TestBase {
                         null,
                         advancedSettings,
                         null,
+                        null,
                         null
                 )
         );

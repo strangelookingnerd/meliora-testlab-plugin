@@ -1,9 +1,6 @@
 package fi.meliora.testlab.ext.jenkins;
 
-import hudson.AbortException;
-import hudson.EnvVars;
-import hudson.Extension;
-import hudson.Launcher;
+import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.PluginServletFilter;
@@ -209,12 +206,33 @@ public class TestlabNotifier extends Notifier {
         return importTestCasesRootCategory;
     }
 
+    // If set, publish Robot Framework results
+    private PublishRobot publishRobot;
+
+    public PublishRobot getPublishRobot() {
+        return publishRobot;
+    }
+
+    // Robot output.xml file path
+    private String robotOutput;
+
+    public String getRobotOutput() {
+        return robotOutput;
+    }
+
+    // If set, catenates all sub keywords of a keyword as a single step in result
+    private boolean robotCatenateParentKeywords;
+
+    public boolean isRobotCatenateParentKeywords() {
+        return robotCatenateParentKeywords;
+    }
+
     /**
      * This annotation tells Hudson to call this constructor, with
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings, PublishTap publishTap, ImportTestCases importTestCases) {
+    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings, PublishRobot publishRobot, PublishTap publishTap, ImportTestCases importTestCases) {
         this.projectKey = projectKey;
         this.testRunTitle = testRunTitle;
         this.comment = comment;
@@ -237,6 +255,12 @@ public class TestlabNotifier extends Notifier {
             this.apiKey = advancedSettings.getApiKey();
             this.testCaseMappingField = advancedSettings.getTestCaseMappingField();
             this.usingonpremise = advancedSettings.getUsingonpremise();
+        }
+
+        this.publishRobot = publishRobot;
+        if(publishRobot != null) {
+            this.robotOutput = publishRobot.getRobotOutput();
+            this.robotCatenateParentKeywords = publishRobot.isRobotCatenateParentKeywords();
         }
 
         this.publishTap = publishTap;
@@ -396,7 +420,13 @@ public class TestlabNotifier extends Notifier {
 
         String runTapMappingPrefix = vr.replace(tapMappingPrefix);
 
+        FilePath workspace = build.getWorkspace();
+
         String abortError = null;
+        if(workspace == null) {
+            abortError = "The provided build has no workspace.";
+        }
+
         if(!runUsingonpremise && isBlank(runCompanyId)) {
             abortError = "Could not publish results to Testlab: Company ID is not set. Configure it for your job or globally in Jenkins' configuration.";
         }
@@ -427,6 +457,7 @@ public class TestlabNotifier extends Notifier {
         }
 
         Sender.sendResults(
+                workspace,
                 runCompanyId,
                 runUsingonpremise,
                 runOnpremiseurl,
@@ -451,6 +482,9 @@ public class TestlabNotifier extends Notifier {
                 importTestCases != null,
                 importTestCasesRootCategory,
                 runTestCaseMappingField,
+                publishRobot != null,
+                robotOutput,
+                robotCatenateParentKeywords,
                 build
         );
 
@@ -791,6 +825,41 @@ public class TestlabNotifier extends Notifier {
     }
 
     /**
+     * Optional job config block for Robot Framework support.
+     *
+     * If set implicitly implies that Robot results should be published to Testlab.
+     */
+    public static final class PublishRobot {
+        // Robot output.xml file path
+        private String robotOutput;
+
+        // If set, catenates all sub keywords of a keyword as a single step in result
+        private boolean robotCatenateParentKeywords;
+
+        public String getRobotOutput() {
+            return robotOutput;
+        }
+
+        public boolean isRobotCatenateParentKeywords() {
+            return robotCatenateParentKeywords;
+        }
+
+        @DataBoundConstructor
+        public PublishRobot(String robotOutput, boolean robotCatenateParentKeywords) {
+            this.robotOutput = robotOutput;
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
+        }
+
+        @Override
+        public String toString() {
+            return "PublishRobot{" +
+                    "robotOutput='" + robotOutput + '\'' +
+                    ", robotCatenateParentKeywords=" + robotCatenateParentKeywords +
+                    '}';
+        }
+    }
+
+    /**
      * Optional job config block for auto-creating test cases.
      *
      * If set implicitly implies that test cases should be automatically created during the push.
@@ -845,6 +914,7 @@ public class TestlabNotifier extends Notifier {
                 ", usingonpremise=" + usingonpremise +
                 ", publishTap=" + publishTap +
                 ", importTestCases=" + importTestCases +
+                ", publishRobot=" + publishRobot +
                 '}';
     }
 }

@@ -6,18 +6,27 @@ import fi.meliora.testlab.ext.rest.model.AddTestResultResponse;
 import fi.meliora.testlab.ext.rest.model.KeyValuePair;
 import fi.meliora.testlab.ext.rest.model.TestCaseResult;
 import fi.meliora.testlab.ext.rest.model.TestCaseResultStep;
+import hudson.AbortException;
+import hudson.FilePath;
+import hudson.Util;
 import hudson.model.AbstractBuild;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
+import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
+import org.apache.tools.ant.DirectoryScanner;
+import org.apache.tools.ant.types.FileSet;
 import org.tap4j.plugin.model.TapTestResultResult;
 
+import java.io.File;
+import java.io.IOException;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
@@ -49,6 +58,7 @@ public class Sender {
     /**
      * Does the actual sending of results to Testlab. Called from appropriate Jenkins extension point.
      *
+     * @param workspace
      * @param companyId
      * @param usingonpremise
      * @param onpremiseurl
@@ -72,14 +82,17 @@ public class Sender {
      * @param importTestCases
      * @param importTestCasesRootCategory
      * @param testCaseMappingField
+     * @param publishRobot
+     * @param robotOutput
+     * @param robotCatenateParentKeywords
      * @param build
      */
-    public static void sendResults(String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone,
+    public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone,
                                    String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
                                    Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser,
                                    boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
                                    boolean importTestCases, String importTestCasesRootCategory,
-                                   String testCaseMappingField, AbstractBuild<?, ?> build) {
+                                   String testCaseMappingField, boolean publishRobot, String robotOutput, boolean robotCatenateParentKeywords, AbstractBuild<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
@@ -88,7 +101,7 @@ public class Sender {
                     + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser
                     + ", " + publishTap + ", " + tapTestsAsSteps + ", " + tapFileNameInIdentifier + ", " + tapTestNumberInIdentifier + ", " + tapMappingPrefix
                     + ", " + importTestCases + ", " + importTestCasesRootCategory
-                    + ", " + testCaseMappingField
+                    + ", " + testCaseMappingField + ", " + publishRobot + ", " + robotOutput + ", " + robotCatenateParentKeywords
             );
 
         if(log.isLoggable(Level.FINE))
@@ -100,11 +113,20 @@ public class Sender {
         if(log.isLoggable(Level.FINE))
             log.fine("Have results: " + ra);
 
-        if(ra == null) {
+        String robotXml = null;
+        if(publishRobot) {
+            try {
+                robotXml = workspace.act(new RobotOutputCallable(robotOutput));
+                log.fine("Found robot output xml: " + robotXml);
+            } catch (Exception e) {
+                log.severe("Could not parse Robot Framework's output.xml: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+        }
+
+        if(ra == null && (publishRobot && robotXml == null)) {
             log.warning("We have no results to publish. Please make sure your job is configured to publish some test results to make them available to this plugin.");
         } else {
-            List<TestCaseResult> results = new ArrayList<TestCaseResult>();
-
             String user = "Jenkins job: " + build.getProject().getDisplayName();
 
             fi.meliora.testlab.ext.rest.model.TestResult data = new fi.meliora.testlab.ext.rest.model.TestResult();
@@ -146,26 +168,46 @@ public class Sender {
                 data.setTags(tags);
             }
 
-            Object resultObject = ra.getResult();
-            if(resultObject instanceof List) {
-                List childReports = (List)resultObject;
-                for(Object childReport : childReports) {
-                    if(childReport instanceof AggregatedTestResultAction.ChildReport) {
-                        Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
-                        if(log.isLoggable(Level.FINE))
-                            log.fine("Have child results: " + childResultObject);
-                        parseResult(build, childResultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+            boolean hadResults = false;
+            List<TestCaseResult> results = new ArrayList<TestCaseResult>();
+
+            if(ra != null) {
+                Object resultObject = ra.getResult();
+                if (resultObject instanceof List) {
+                    List childReports = (List) resultObject;
+                    for (Object childReport : childReports) {
+                        if (childReport instanceof AggregatedTestResultAction.ChildReport) {
+                            Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
+                            if (log.isLoggable(Level.FINE))
+                                log.fine("Have child results: " + childResultObject);
+                            parseResult(build, childResultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+                        }
                     }
+                } else {
+                    parseResult(build, resultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
                 }
-            } else {
-                parseResult(build, resultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+
+                if (results.size() > 0) {
+                    if (log.isLoggable(Level.FINE))
+                        log.fine("Sending " + results.size() + " test results to Testlab.");
+                    data.setResults(results);
+
+                    hadResults = true;
+                }
             }
 
-            if(results.size() > 0) {
-                if(log.isLoggable(Level.FINE))
-                    log.fine("Sending " + results.size() + " test results to Testlab.");
-                data.setResults(results);
+            if(publishRobot && robotXml != null) {
+                data.setRobotCatenateParentKeywords(robotCatenateParentKeywords);
+                data.setXmlFormat(fi.meliora.testlab.ext.rest.model.TestResult.FORMAT_ROBOTFRAMEWORK);
+                data.setXml(robotXml);
 
+                if(log.isLoggable(Level.FINE))
+                    log.fine("Including robot framework test results to be sent to Testlab.");
+
+                hadResults = true;
+            }
+
+            if(hadResults) {
                 // send results to testlab
                 String onpremiseUrl = usingonpremise ? onpremiseurl : null;
                 AddTestResultResponse response = CrestEndpointFactory.getInstance().getTestlabEndpoint(
@@ -228,18 +270,6 @@ public class Sender {
                     TapTestResultResult r = (TapTestResultResult)tr;
 
                     // see https://testanything.org/tap-specification.html
-
-/*
-                    log.info(" - " + r);
-                    log.info(" -- " + r.getDisplayName());
-                    log.info(" --- " + r.getTitle());
-                    log.info(" ---- " + r.getStatus());
-                    log.info(" ----- " + r.getDescription());
-                    log.info(" ------ " + r.getSafeName());
-                    log.info(" ------- " + r.getDuration());
-                    log.info(" -------- " + r.getTodo());
-                    log.info(" --------- " + r.getSkip());
-*/
 
                     try {
                         //// parse tap test name
@@ -422,6 +452,43 @@ public class Sender {
             return true;
         } catch (ClassNotFoundException e) {
             return false;
+        }
+    }
+
+    public static boolean hasRobotSupport() {
+        try {
+            Class.forName("hudson.plugins.robot.RobotPublisher");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    /**
+     * Reads Robot Framework output xml files from the system.
+     */
+    private static final class RobotOutputCallable extends MasterToSlaveFileCallable<String> {
+        private String robotOutput;
+        public RobotOutputCallable(String robotOutput) {
+            this.robotOutput = robotOutput;
+        }
+        @Override
+        public String invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+            FileSet fs = Util.createFileSet(f, robotOutput);
+            DirectoryScanner ds = fs.getDirectoryScanner();
+            String[] files = ds.getIncludedFiles();
+            if(files.length > 0) {
+                for(String file : files) {
+                    if(log.isLoggable(Level.FINE))
+                        log.fine("Matching robot output file found: " + ds.getBasedir().getAbsolutePath() + File.pathSeparator + file);
+                }
+                if(files.length > 1) {
+                    throw new AbortException("Robot Output path " + robotOutput + " matches more than one file. Pattern must be more exact. Aborting.");
+                }
+                File outputXml = new File(ds.getBasedir(), files[0]);
+                return Util.loadFile(outputXml, Charset.forName("UTF-8"));
+            }
+            return null;
         }
     }
 
