@@ -7,7 +7,7 @@
     </parent>
 
     <artifactId>meliora-testlab</artifactId>
-    <version>1.11</version>
+    <version>1.11-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <description>Publishes results of automated tests to Meliora Testlab</description>
     <url>http://wiki.jenkins-ci.org/display/JENKINS/Meliora+Testlab+Plugin</url>
