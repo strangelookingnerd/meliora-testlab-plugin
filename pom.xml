@@ -23,7 +23,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/meliora-testlab-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/meliora-testlab-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/meliora-testlab-plugin</url>
-      <tag>meliora-testlab-1.11</tag>
+        <tag>HEAD</tag>
   </scm>
 
     <developers>
