@@ -10,6 +10,7 @@ import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Util;
 import hudson.model.AbstractBuild;
+import hudson.model.Action;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
@@ -20,10 +21,12 @@ import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
+import org.tap4j.plugin.TapTestResultAction;
 import org.tap4j.plugin.model.TapTestResultResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -107,11 +110,22 @@ public class Sender {
         if(log.isLoggable(Level.FINE))
             log.fine("tap-plugin installed ? : " + (hasTAPSupport() ? "Yes, we have TAP support." : "No, no TAP support available."));
 
-        // parse test results
-        AbstractTestResultAction ra = build.getAction(AbstractTestResultAction.class);
+        //// parse test results
 
+        boolean hasTAPSupport = hasTAPSupport();
+        List<Object> ras = new ArrayList<Object>();
+        for(Action a : build.getAllActions()) {
+            if(log.isLoggable(Level.FINE))
+                log.fine("Action: " + a);
+            if (hasTAPSupport && a instanceof TapTestResultAction) {
+                ras.add(a);
+            } else if (a instanceof AbstractTestResultAction) {
+                ras.add(a);
+            }
+        }
+        
         if(log.isLoggable(Level.FINE))
-            log.fine("Have results: " + ra);
+            log.fine("Have results: " + ras);
 
         String robotXml = null;
         if(publishRobot) {
@@ -124,7 +138,7 @@ public class Sender {
             }
         }
 
-        if(ra == null && (publishRobot && robotXml == null)) {
+        if(ras.size() == 0 && (publishRobot && robotXml == null)) {
             log.warning("We have no results to publish. Please make sure your job is configured to publish some test results to make them available to this plugin.");
         } else {
             String user = "Jenkins job: " + build.getProject().getDisplayName();
@@ -171,29 +185,42 @@ public class Sender {
             boolean hadResults = false;
             List<TestCaseResult> results = new ArrayList<TestCaseResult>();
 
-            if(ra != null) {
-                Object resultObject = ra.getResult();
-                if (resultObject instanceof List) {
-                    List childReports = (List) resultObject;
-                    for (Object childReport : childReports) {
-                        if (childReport instanceof AggregatedTestResultAction.ChildReport) {
-                            Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
-                            if (log.isLoggable(Level.FINE))
-                                log.fine("Have child results: " + childResultObject);
-                            parseResult(build, childResultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
-                        }
+            for(Object ra : ras) {
+                Object resultObject = null;
+                if(ra instanceof TapTestResultAction) {
+                    try {
+                        // due to 2.1 change in tap plugin, try to keep compatibility to tap plugin < 2.1
+                        Method m = ra.getClass().getMethod("getResult");
+                        resultObject = m.invoke(ra);
+                    } catch (Exception e) {
+                        log.fine("Could not resolve TapTestResultAction result: " + e.getMessage());
                     }
-                } else {
-                    parseResult(build, resultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+                } else if(ra instanceof AbstractTestResultAction) {
+                    resultObject = ((AbstractTestResultAction)ra).getResult();
                 }
-
-                if (results.size() > 0) {
-                    if (log.isLoggable(Level.FINE))
-                        log.fine("Sending " + results.size() + " test results to Testlab.");
-                    data.setResults(results);
-
-                    hadResults = true;
+                if(resultObject != null) {
+                    if (resultObject instanceof List) {
+                        List childReports = (List) resultObject;
+                        for (Object childReport : childReports) {
+                            if (childReport instanceof AggregatedTestResultAction.ChildReport) {
+                                Object childResultObject = ((AggregatedTestResultAction.ChildReport) childReport).result;
+                                if (log.isLoggable(Level.FINE))
+                                    log.fine("Have child results: " + childResultObject);
+                                parseResult(build, childResultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+                            }
+                        }
+                    } else {
+                        parseResult(build, resultObject, results, user, publishTap, tapTestsAsSteps, tapFileNameInIdentifier, tapTestNumberInIdentifier, tapMappingPrefix);
+                    }
                 }
+            }
+
+            if (results.size() > 0) {
+                if (log.isLoggable(Level.FINE))
+                    log.fine("Sending " + results.size() + " test results to Testlab.");
+                data.setResults(results);
+
+                hadResults = true;
             }
 
             if(publishRobot && robotXml != null) {
@@ -449,15 +476,6 @@ public class Sender {
     public static boolean hasTAPSupport() {
         try {
             Class.forName("org.tap4j.plugin.model.TapStreamResult");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-    }
-
-    public static boolean hasRobotSupport() {
-        try {
-            Class.forName("hudson.plugins.robot.RobotPublisher");
             return true;
         } catch (ClassNotFoundException e) {
             return false;
