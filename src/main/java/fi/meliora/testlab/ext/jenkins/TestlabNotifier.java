@@ -377,7 +377,7 @@ public class TestlabNotifier extends Notifier {
         Map<String, String> additionalKeys = new HashMap<String, String>();
         additionalKeys.put("BUILD_FULL_DISPLAY_NAME", build.getFullDisplayName());
         Run.Summary summary = build.getBuildStatusSummary();
-        additionalKeys.put("BUILD_STATUS", summary != null ? summary.message : "[No build status available]");
+        additionalKeys.put("BUILD_STATUS", summary.message != null ? summary.message : "[No build status available]");
         Result result = build.getResult();
         additionalKeys.put("BUILD_RESULT", result != null ? result.toString() : "[No build result available]");
 
