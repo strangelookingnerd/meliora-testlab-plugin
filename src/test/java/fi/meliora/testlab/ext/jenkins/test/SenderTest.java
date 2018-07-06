@@ -6,6 +6,7 @@ import hudson.model.FreeStyleProject;
 import hudson.tasks.Maven;
 import hudson.tasks.Shell;
 import hudson.tasks.junit.JUnitResultArchiver;
+import hudson.util.Secret;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
@@ -61,9 +62,9 @@ public class SenderTest extends TestBase {
         TestlabNotifier.AdvancedSettings advancedSettings;
         if(TEST_TESTLABURL != null) {
             TestlabNotifier.Usingonpremise usingonpremise = new TestlabNotifier.Usingonpremise(TEST_TESTLABURL);
-            advancedSettings = new TestlabNotifier.AdvancedSettings(null, TEST_APIKEY, "Automated", usingonpremise);
+            advancedSettings = new TestlabNotifier.AdvancedSettings(null, Secret.fromString(TEST_APIKEY), "Automated", usingonpremise);
         } else {
-            advancedSettings = new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, TEST_APIKEY, "Automated", null);
+            advancedSettings = new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, Secret.fromString(TEST_APIKEY), "Automated", null);
         }
 
         //// setup a new project and build it

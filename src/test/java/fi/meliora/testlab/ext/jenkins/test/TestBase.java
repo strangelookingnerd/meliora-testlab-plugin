@@ -77,7 +77,7 @@ public class TestBase {
      * @param value
      */
     protected void assertHasValue(HtmlInput input, String value) {
-        assertTrue(input.getNameAttribute() + " value was not " + value, value.equals(input.getValueAttribute()));
+        assertTrue(input.getNameAttribute() + " value was not " + value + ": was " + input.getValueAttribute(), value.equals(input.getValueAttribute()));
     }
 
     /**
@@ -87,7 +87,7 @@ public class TestBase {
      * @param value
      */
     protected void assertHasValue(HtmlTextArea textArea, String value) {
-        assertTrue(textArea.getNameAttribute() + " value was not " + value, value.equals(textArea.getText()));
+        assertTrue(textArea.getNameAttribute() + " value was not " + value + ": was " + textArea.getText(), value.equals(textArea.getText()));
     }
 
     /**

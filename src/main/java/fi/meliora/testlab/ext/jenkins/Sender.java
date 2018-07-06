@@ -21,8 +21,6 @@ import jenkins.MasterToSlaveFileCallable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
-import org.tap4j.plugin.TapTestResultAction;
-import org.tap4j.plugin.model.TapTestResultResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,35 +58,6 @@ public class Sender {
 
     /**
      * Does the actual sending of results to Testlab. Called from appropriate Jenkins extension point.
-     *
-     * @param workspace
-     * @param companyId
-     * @param usingonpremise
-     * @param onpremiseurl
-     * @param apiKey
-     * @param projectKey
-     * @param milestone
-     * @param testRunTitle
-     * @param comment
-     * @param testTargetTitle
-     * @param testEnvironmentTitle
-     * @param tags
-     * @param parameters
-     * @param addIssues
-     * @param mergeAsSingleIssue
-     * @param reopenExisting
-     * @param assignToUser
-     * @param publishTap
-     * @param tapTestsAsSteps,
-     * @param tapFileNameInIdentifier,
-     * @param tapTestNumberInIdentifier
-     * @param importTestCases
-     * @param importTestCasesRootCategory
-     * @param testCaseMappingField
-     * @param publishRobot
-     * @param robotOutput
-     * @param robotCatenateParentKeywords
-     * @param build
      */
     public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone,
                                    String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
@@ -117,7 +86,7 @@ public class Sender {
         for(Action a : build.getAllActions()) {
             if(log.isLoggable(Level.FINE))
                 log.fine("Action: " + a);
-            if (hasTAPSupport && a instanceof TapTestResultAction) {
+            if (hasTAPSupport && a instanceof org.tap4j.plugin.TapTestResultAction) {
                 ras.add(a);
             } else if (a instanceof AbstractTestResultAction) {
                 ras.add(a);
@@ -187,7 +156,7 @@ public class Sender {
 
             for(Object ra : ras) {
                 Object resultObject = null;
-                if(ra instanceof TapTestResultAction) {
+                if(hasTAPSupport && ra instanceof org.tap4j.plugin.TapTestResultAction) {
                     try {
                         // due to 2.1 change in tap plugin, try to keep compatibility to tap plugin < 2.1
                         Method m = ra.getClass().getMethod("getResult");
@@ -294,7 +263,7 @@ public class Sender {
                 org.tap4j.plugin.model.TapStreamResult tsr = (org.tap4j.plugin.model.TapStreamResult)result;
 
                 for(TestResult tr : tsr.getChildren()) {
-                    TapTestResultResult r = (TapTestResultResult)tr;
+                    org.tap4j.plugin.model.TapTestResultResult r = (org.tap4j.plugin.model.TapTestResultResult)tr;
 
                     // see https://testanything.org/tap-specification.html
 

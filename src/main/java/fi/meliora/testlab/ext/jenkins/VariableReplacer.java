@@ -18,7 +18,7 @@ public class VariableReplacer {
     /**
      * Creates a new variable replacer by combining key-value maps provided.
      *
-     * @param vars
+     * @param vars variables
      */
     @SuppressWarnings("unchecked")
     public VariableReplacer(Map<String, String>... vars) {
@@ -38,8 +38,8 @@ public class VariableReplacer {
      * Replaces all tags in format ${BUILD_NUMBER} with matching value from envVars.
      * If variable is missing, tag is left as it is.
      *
-     * @param src
-     * @return
+     * @param src source String
+     * @return String with variables replaced
      */
     public String replace(String src) {
         if(vars == null || src == null || src.length() == 0)

@@ -4,6 +4,7 @@ import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.PluginServletFilter;
+import hudson.util.Secret;
 import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -137,9 +138,9 @@ public class TestlabNotifier extends Notifier {
     }
 
     // job specific apikey of target testlab, optional
-    private String apiKey;
+    private Secret apiKey;
 
-    public String getApiKey() {
+    public Secret getApiKey() {
         return apiKey;
     }
 
@@ -298,7 +299,6 @@ public class TestlabNotifier extends Notifier {
      * When {@link hudson.tasks.Publisher} behaves this way, note that they can no longer
      * change the build status anymore.
      *
-     * @author Kohsuke Kawaguchi
      * @since 1.153
      */
     @Override
@@ -329,7 +329,7 @@ public class TestlabNotifier extends Notifier {
      * @param build
      * @param launcher
      * @param listener
-     * @return
+     * @return boolean
      * @throws InterruptedException
      * @throws IOException
      */
@@ -342,7 +342,12 @@ public class TestlabNotifier extends Notifier {
         log.fine("perform(): " + this + ", descriptor: " + d);
 
         // get job specific settings if any and fallback to global configuration
-        String runApiKey = isBlank(apiKey) ? d.getApiKey() : apiKey;
+        Secret secretKey = apiKey;
+        if(secretKey == null || "".equals(secretKey.getPlainText())) {
+            // prefer key from global settings if the job has none
+            secretKey = d.getApiKey();
+        }
+        String runApiKey = secretKey.getPlainText();
         String runTestCaseMappingField = isBlank(testCaseMappingField) ? d.getTestCaseMappingField() : testCaseMappingField;
 
         Usingonpremise uop = advancedSettings != null && advancedSettings.getUsingonpremise() != null
@@ -503,7 +508,7 @@ public class TestlabNotifier extends Notifier {
         // company id of the testlab which to publish to
         private String companyId;
         // testlab api key
-        private String apiKey;
+        private Secret apiKey;
         // custom field name to map the test ids against with
         private String testCaseMappingField;
         // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
@@ -551,7 +556,7 @@ public class TestlabNotifier extends Notifier {
         public boolean configure(StaplerRequest staplerRequest, JSONObject json) throws Descriptor.FormException {
             // persist configuration
             companyId = json.getString("companyId");
-            apiKey = json.getString("apiKey");
+            apiKey = Secret.fromString(json.getString("apiKey"));
             testCaseMappingField = json.getString("testCaseMappingField");
 
             JSONObject uop = json.getJSONObject("usingonpremise");
@@ -596,7 +601,7 @@ public class TestlabNotifier extends Notifier {
             return companyId;
         }
 
-        public String getApiKey() {
+        public Secret getApiKey() {
             return apiKey;
         }
 
@@ -640,9 +645,9 @@ public class TestlabNotifier extends Notifier {
         }
 
         // job specific apikey of target testlab, optional
-        private String apiKey;
+        private Secret apiKey;
 
-        public String getApiKey() {
+        public Secret getApiKey() {
             return apiKey;
         }
 
@@ -661,7 +666,7 @@ public class TestlabNotifier extends Notifier {
         }
 
         @DataBoundConstructor
-        public AdvancedSettings(String companyId, String apiKey, String testCaseMappingField, Usingonpremise usingonpremise) {
+        public AdvancedSettings(String companyId, Secret apiKey, String testCaseMappingField, Usingonpremise usingonpremise) {
             this.companyId = companyId;
             this.apiKey = apiKey;
             this.testCaseMappingField = testCaseMappingField;

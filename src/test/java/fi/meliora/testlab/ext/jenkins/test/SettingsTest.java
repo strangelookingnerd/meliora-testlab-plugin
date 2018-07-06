@@ -3,6 +3,7 @@ package fi.meliora.testlab.ext.jenkins.test;
 import com.gargoylesoftware.htmlunit.html.*;
 import fi.meliora.testlab.ext.jenkins.TestlabNotifier;
 import hudson.model.FreeStyleProject;
+import hudson.util.Secret;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -35,7 +36,7 @@ public class SettingsTest extends TestBase {
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
         HtmlCheckBoxInput corsInput = form.getInputByName(FIELD_CORS);
         HtmlTextInput originsInput = form.getInputByName(FIELD_ORIGIN);
@@ -72,7 +73,7 @@ public class SettingsTest extends TestBase {
         assertHasValue(companyIdInput, "unittestcompany");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertHasValue(apiKeyInput, "1010101010202020");
+        assertHasValue(apiKeyInput, Secret.fromString("1010101010202020").getEncryptedValue());
         assertHasValue(testCaseMappingFieldInput, "Some field");
         assertChecked(corsInput, true);
         assertHasValue(originsInput, "http://somehost, http://anotherhost");
@@ -122,7 +123,7 @@ public class SettingsTest extends TestBase {
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
         HtmlTextArea commentInput = form.getTextAreaByName(FIELD_COMMENT);
         HtmlTextInput tagsInput = form.getInputByName(FIELD_TAGS);
@@ -395,7 +396,7 @@ public class SettingsTest extends TestBase {
         assertHasValue(companyIdInput, "unittestcompanyjob");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertHasValue(apiKeyInput, "1010101010303030");
+        assertHasValue(apiKeyInput, Secret.fromString("1010101010303030").getEncryptedValue());
         assertHasValue(testCaseMappingFieldInput, "Other field");
 
         assertChecked(publishTapInput, true);
