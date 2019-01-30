@@ -9,8 +9,8 @@ import fi.meliora.testlab.ext.rest.model.TestCaseResultStep;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
+import hudson.model.Run;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.junit.CaseResult;
 import hudson.tasks.junit.SuiteResult;
@@ -64,7 +64,8 @@ public class Sender {
                                    Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser,
                                    boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
                                    boolean importTestCases, String importTestCasesRootCategory,
-                                   String testCaseMappingField, boolean publishRobot, String robotOutput, boolean robotCatenateParentKeywords, AbstractBuild<?, ?> build) {
+                                   String testCaseMappingField, boolean publishRobot, String robotOutput, boolean robotCatenateParentKeywords,
+                                   Run<?, ?> build) {
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
@@ -110,7 +111,7 @@ public class Sender {
         if(ras.size() == 0 && (publishRobot && robotXml == null)) {
             log.warning("We have no results to publish. Please make sure your job is configured to publish some test results to make them available to this plugin.");
         } else {
-            String user = "Jenkins job: " + build.getProject().getDisplayName();
+            String user = "Jenkins job: " + build.getParent().getDisplayName();
 
             fi.meliora.testlab.ext.rest.model.TestResult data = new fi.meliora.testlab.ext.rest.model.TestResult();
             data.setStatus(fi.meliora.testlab.ext.rest.model.TestResult.STATUS_FINISHED);
@@ -206,12 +207,16 @@ public class Sender {
             if(hadResults) {
                 // send results to testlab
                 String onpremiseUrl = usingonpremise ? onpremiseurl : null;
-                AddTestResultResponse response = CrestEndpointFactory.getInstance().getTestlabEndpoint(
-                        companyId, onpremiseUrl, apiKey, TestResultResource.class
-                ).addTestResult(data);
+
+                AddTestResultResponse response = null;
+                if(!"true".equalsIgnoreCase(System.getProperty("TESTLAB_SENDER_SKIP_SEND"))) {
+                    response = CrestEndpointFactory.getInstance().getTestlabEndpoint(
+                            companyId, onpremiseUrl, apiKey, TestResultResource.class
+                    ).addTestResult(data);
+                }
 
                 if(log.isLoggable(Level.INFO))
-                    log.info("Posted results successfully to testlab test run: " + response.getTestRunId());
+                    log.info("Posted results successfully to testlab test run: " + (response != null ? "" + response.getTestRunId() : "TESTLAB_SENDER_SKIP_SEND"));
             } else {
                 if(log.isLoggable(Level.INFO))
                     log.info("No test results resolved to send to Testlab. Skipping.");
@@ -219,7 +224,7 @@ public class Sender {
         }
     }
 
-    protected static void parseResult(AbstractBuild<?, ?> build, Object resultObject, final List<TestCaseResult> results, String user,
+    protected static void parseResult(Run<?, ?> build, Object resultObject, final List<TestCaseResult> results, String user,
                                       boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix) {
         if(resultObject instanceof hudson.tasks.test.TestResult) {
             TestResult result = (TestResult)resultObject;
@@ -419,7 +424,7 @@ public class Sender {
         }
     }
 
-    protected static TestCaseResult getTestCaseResult(AbstractBuild<?, ?> build, String id, int result, String msg, String stacktrace, String user, float duration) {
+    protected static TestCaseResult getTestCaseResult(Run<?, ?> build, String id, int result, String msg, String stacktrace, String user, float duration) {
         TestCaseResult r = new TestCaseResult();
         r.setMappingId(id);
         r.setResult(result);

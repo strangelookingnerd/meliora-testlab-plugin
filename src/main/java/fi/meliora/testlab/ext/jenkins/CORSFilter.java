@@ -44,7 +44,7 @@ public class CORSFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         if(enabled) {
-            log.fine("doFilter: CORSFilter enabled for origins " + origins);
+            log.finest("doFilter: CORSFilter enabled for origins " + origins);
 
             if (request instanceof HttpServletRequest && response instanceof HttpServletResponse) {
                 if(origins != null && origins.size() > 0) {
@@ -53,7 +53,7 @@ public class CORSFilter implements Filter {
 
                     String origin = req.getHeader("Origin");
                     if(origin != null) {
-                        log.fine("doFilter: CORSFilter processing request for Origin: " + origin);
+                        log.finest("doFilter: CORSFilter processing request for Origin: " + origin);
 
                         //
                         // note: as the cors header supports only a single Origin value, we
@@ -61,7 +61,7 @@ public class CORSFilter implements Filter {
                         //  ourselves
                         //
                         if(origins.contains("*") || origins.contains(origin)) {
-                            log.fine("doFilter: CORSFilter adding headers.");
+                            log.finest("doFilter: CORSFilter adding headers.");
                             resp.addHeader("Access-Control-Allow-Origin", origin);
                             resp.addHeader("Access-Control-Allow-Methods", CORS_METHODS);
                             resp.addHeader("Access-Control-Allow-Headers", CORS_HEADERS);
@@ -76,6 +76,8 @@ public class CORSFilter implements Filter {
                     }
                 }
             }
+        } else {
+            log.finest("doFilter: CORSFilter disabled.");
         }
         chain.doFilter(request, response);
     }

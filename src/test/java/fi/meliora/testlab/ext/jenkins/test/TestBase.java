@@ -1,13 +1,16 @@
 package fi.meliora.testlab.ext.jenkins.test;
 
+import com.gargoylesoftware.css.parser.CSSErrorHandler;
+import com.gargoylesoftware.css.parser.CSSException;
+import com.gargoylesoftware.css.parser.CSSParseException;
 import com.gargoylesoftware.htmlunit.html.HtmlInput;
+import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import hudson.util.Secret;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
 import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
-import org.w3c.css.sac.CSSParseException;
-import org.w3c.css.sac.ErrorHandler;
 
 import java.io.IOException;
 
@@ -101,6 +104,34 @@ public class TestBase {
     }
 
     /**
+     * Asserts that htmlpasswordinput has a password set.
+     *
+     * @param input
+     * @param plainText
+     */
+    protected void assertPassword(HtmlPasswordInput input, String plainText) {
+        String decrypted = null;
+        Secret secret = Secret.decrypt(input.getValueAttribute());
+        if(secret != null)
+            decrypted = secret.getPlainText();
+        assertTrue(input.getNameAttribute() + " password was not " + plainText + ": was " + decrypted, plainText.equals(decrypted));
+    }
+
+    /**
+     * Assets that String s contains all Strings c.
+     *
+     * @param s
+     * @param c
+     */
+    protected void assertContains(String s, String... c) {
+        if(c != null) {
+            for(String cs : c) {
+                assertTrue(s + "\n... must contain: " + cs, s != null && s.contains(cs));
+            }
+        }
+    }
+
+    /**
      * Setups the JenkinsRule for a test.
      */
     @Before
@@ -114,19 +145,25 @@ public class TestBase {
     protected JenkinsRule.WebClient getWebClient() {
         JenkinsRule.WebClient webClient = j.createWebClient();
 //        webClient.setThrowExceptionOnFailingStatusCode(false);
-        webClient.setCssErrorHandler(new ErrorHandler() {
+        webClient.setCssErrorHandler(new CSSErrorHandler() {
             @Override
-            public void warning(CSSParseException e) {
+            public void warning(CSSParseException e) throws CSSException {
             }
+
             @Override
-            public void error(CSSParseException e) {
+            public void error(CSSParseException e) throws CSSException {
             }
+
             @Override
-            public void fatalError(CSSParseException e) {
+            public void fatalError(CSSParseException e) throws CSSException {
             }
         });
 //        webClient.setPrintContentOnFailingStatusCode(false);
         return webClient;
+    }
+
+    protected void l(String s) {
+        System.err.println(s);
     }
 
 }

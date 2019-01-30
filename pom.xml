@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>2.26</version>
+        <version>2.30</version>
     </parent>
 
     <artifactId>meliora-testlab</artifactId>
@@ -24,7 +24,7 @@
         <developerConnection>scm:git:ssh://git@github.com/jenkinsci/meliora-testlab-plugin.git</developerConnection>
         <url>https://github.com/jenkinsci/meliora-testlab-plugin</url>
         <tag>HEAD</tag>
-  </scm>
+    </scm>
 
     <developers>
         <developer>
@@ -40,6 +40,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
+        <jenkins.version>2.7.3</jenkins.version>
+        <jenkins-test-harness.version>2.46</jenkins-test-harness.version>
+        <java.level>7</java.level>
     </properties>
 
     <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -88,13 +91,19 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>junit</artifactId>
-            <version>1.6</version>
+            <version>1.15</version>
         </dependency>
         <dependency>
             <groupId>org.tap4j</groupId>
             <artifactId>tap</artifactId>
             <version>1.23</version>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-aggregator</artifactId>
+            <version>2.5</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -103,7 +112,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.5.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -123,7 +132,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>2.6</version>
+                <version>2.8.2</version>
                 <dependencies>
                     <dependency>
                         <groupId>org.apache.maven.wagon</groupId>

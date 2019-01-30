@@ -73,7 +73,7 @@ public class SettingsTest extends TestBase {
         assertHasValue(companyIdInput, "unittestcompany");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertHasValue(apiKeyInput, Secret.fromString("1010101010202020").getEncryptedValue());
+        assertPassword(apiKeyInput, "1010101010202020");
         assertHasValue(testCaseMappingFieldInput, "Some field");
         assertChecked(corsInput, true);
         assertHasValue(originsInput, "http://somehost, http://anotherhost");
@@ -396,7 +396,7 @@ public class SettingsTest extends TestBase {
         assertHasValue(companyIdInput, "unittestcompanyjob");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertHasValue(apiKeyInput, Secret.fromString("1010101010303030").getEncryptedValue());
+        assertPassword(apiKeyInput, "1010101010303030");
         assertHasValue(testCaseMappingFieldInput, "Other field");
 
         assertChecked(publishTapInput, true);

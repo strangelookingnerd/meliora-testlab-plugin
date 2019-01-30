@@ -5,10 +5,14 @@ import hudson.model.*;
 import hudson.tasks.*;
 import hudson.util.PluginServletFilter;
 import hudson.util.Secret;
+import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,7 +27,7 @@ import java.util.logging.Logger;
  *
  * @author Meliora Ltd
  */
-public class TestlabNotifier extends Notifier {
+public class TestlabNotifier extends Notifier implements SimpleBuildStep {
     private final static Logger log = Logger.getLogger(TestlabNotifier.class.getName());
 
     /*
@@ -34,10 +38,58 @@ public class TestlabNotifier extends Notifier {
         after the build result is set to its final value by other Recorders. To run
         even after the build is marked as complete, override Publisher.needsToRunAfterFinalized()
         to return true.
-     */
+
+        This notifier can also be used as a Pipeline step:
+
+        post {
+            always {
+                junit '** /build/test-results/** /*.xml'
+                melioraTestlab(
+                    projectKey: 'PRJX',
+                    testRunTitle: 'Automated tests',
+                    comment: 'Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL}',
+                    milestone: 'M1',
+                    testTargetTitle: 'Version 1.0',
+                    testEnvironmentTitle: 'integration-env',
+                    tags: 'jenkins nightly',
+                    parameters: 'BROWSER, USERNAME',
+                    issuesSettings: [
+                        mergeAsSingleIssue: true,
+                        reopenExisting: true,
+                        assignToUser: 'agentsmith'
+                    ],
+                    importTestCases: [
+                        importTestCasesRootCategory: 'Imported/Jenkins'
+                    ],
+                    publishTap: [
+                        tapTestsAsSteps: true,
+                        tapFileNameInIdentifier: true,
+                        tapTestNumberInIdentifier: false,
+                        tapMappingPrefix: 'tap-'
+                    ],
+                    publishRobot: [
+                        robotOutput: '** /output.xml',
+                        robotCatenateParentKeywords: true
+                    ],
+                    advancedSettings: [
+                        companyId: 'testcompany',
+                        apiKey: hudson.util.Secret.fromString('verysecretapikey'),
+                        testCaseMappingField: 'Test class',
+                        usingonpremise: [
+                            onpremiseurl: 'http://testcompany:8080/'
+                        ]
+                    ]
+                )
+            }
+        }
+    */
 
     public static final String DEFAULT_COMMENT_TEMPLATE
             = "Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL} - ${BUILD_STATUS}";
+
+    /**
+     * Note: All optional parameters need a setter annotated with @DataBoundSetter
+     */
 
     // project key which to publish the results to
     private String projectKey;
@@ -60,11 +112,21 @@ public class TestlabNotifier extends Notifier {
         return comment;
     }
 
+    @DataBoundSetter
+    public void setComment(String comment) {
+        this.comment = comment;
+    }
+
     // identifier or a title of a milestone the results are bound to in Testlab
     private String milestone;
 
     public String getMilestone() {
         return milestone;
+    }
+
+    @DataBoundSetter
+    public void setMilestone(String milestone) {
+        this.milestone = milestone;
     }
 
     // title of the version the results are bound to in Testlab
@@ -74,11 +136,21 @@ public class TestlabNotifier extends Notifier {
         return testTargetTitle;
     }
 
+    @DataBoundSetter
+    public void setTestTargetTitle(String testTargetTitle) {
+        this.testTargetTitle = testTargetTitle;
+    }
+
     // title of the environment the results are bound to in Testlab
     private String testEnvironmentTitle;
 
     public String getTestEnvironmentTitle() {
         return testEnvironmentTitle;
+    }
+
+    @DataBoundSetter
+    public void setTestEnvironmentTitle(String testEnvironmentTitle) {
+        this.testEnvironmentTitle = testEnvironmentTitle;
     }
 
     // tags for the test run
@@ -88,6 +160,11 @@ public class TestlabNotifier extends Notifier {
         return tags;
     }
 
+    @DataBoundSetter
+    public void setTags(String tags) {
+        this.tags = tags;
+    }
+
     // test case parameters to send from environmental variables
     private String parameters;
 
@@ -95,11 +172,21 @@ public class TestlabNotifier extends Notifier {
         return parameters;
     }
 
+    @DataBoundSetter
+    public void setParameters(String parameters) {
+        this.parameters = parameters;
+    }
+
     // holder for optional issues settings
     private IssuesSettings issuesSettings;
 
     public IssuesSettings getIssuesSettings() {
         return issuesSettings;
+    }
+
+    @DataBoundSetter
+    public void setIssuesSettings(IssuesSettings issuesSettings) {
+        this.issuesSettings = issuesSettings;
     }
 
     // if true added issues are merged and added as a single issue
@@ -128,6 +215,11 @@ public class TestlabNotifier extends Notifier {
 
     public AdvancedSettings getAdvancedSettings() {
         return advancedSettings;
+    }
+
+    @DataBoundSetter
+    public void setAdvancedSettings(AdvancedSettings advancedSettings) {
+        this.advancedSettings = advancedSettings;
     }
 
     // job specific company ID of target testlab, optional
@@ -165,6 +257,11 @@ public class TestlabNotifier extends Notifier {
         return publishTap;
     }
 
+    @DataBoundSetter
+    public void setPublishTap(PublishTap publishTap) {
+        this.publishTap = publishTap;
+    }
+
     // If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file
     private boolean tapTestsAsSteps;
 
@@ -200,6 +297,11 @@ public class TestlabNotifier extends Notifier {
         return importTestCases;
     }
 
+    @DataBoundSetter
+    public void setImportTestCases(ImportTestCases importTestCases) {
+        this.importTestCases = importTestCases;
+    }
+
     // If set, sets the root category path where the test cases are created. By default, "Import".
     private String importTestCasesRootCategory;
 
@@ -212,6 +314,11 @@ public class TestlabNotifier extends Notifier {
 
     public PublishRobot getPublishRobot() {
         return publishRobot;
+    }
+
+    @DataBoundSetter
+    public void setPublishRobot(PublishRobot publishRobot) {
+        this.publishRobot = publishRobot;
     }
 
     // Robot output.xml file path
@@ -313,7 +420,23 @@ public class TestlabNotifier extends Notifier {
      */
     @Override
     public BuildStepMonitor getRequiredMonitorService() {
-        return BuildStepMonitor.STEP;
+        // from the contract of SimpleBuildStep
+        return BuildStepMonitor.NONE;
+    }
+
+    /**
+     * SimpleBuildStep perform().
+     *
+     * @param run a build this is running as a part of
+     * @param workspace a workspace to use for any file operations
+     * @param launcher a way to start processes
+     * @param listener a place to send output
+     * @throws InterruptedException if the step is interrupted
+     * @throws IOException if something goes wrong; use AbortException for a polite error
+     */
+    @Override
+    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+        doPerform(run, workspace, listener);
     }
 
     /**
@@ -329,12 +452,21 @@ public class TestlabNotifier extends Notifier {
      * @param build
      * @param launcher
      * @param listener
-     * @return boolean
+     * @return boolean deprecated
      * @throws InterruptedException
      * @throws IOException
      */
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
+        return doPerform(build, build.getWorkspace(), listener);
+    }
+
+    /**
+     * Execute our logic.
+     *
+     * Should throw AbortException for graceful and polite errors.
+     */
+    protected boolean doPerform(Run<?, ?> build, FilePath workspace, TaskListener listener) throws IOException, InterruptedException {
         listener.getLogger().println("Publishing test results to Testlab project: " + projectKey);
 
         DescriptorImpl d = getDescriptor();
@@ -347,7 +479,7 @@ public class TestlabNotifier extends Notifier {
             // prefer key from global settings if the job has none
             secretKey = d.getApiKey();
         }
-        String runApiKey = secretKey.getPlainText();
+        String runApiKey = secretKey != null ? secretKey.getPlainText() : null;
         String runTestCaseMappingField = isBlank(testCaseMappingField) ? d.getTestCaseMappingField() : testCaseMappingField;
 
         Usingonpremise uop = advancedSettings != null && advancedSettings.getUsingonpremise() != null
@@ -425,8 +557,6 @@ public class TestlabNotifier extends Notifier {
 
         String runTapMappingPrefix = vr.replace(tapMappingPrefix);
 
-        FilePath workspace = build.getWorkspace();
-
         String abortError = null;
         if(workspace == null) {
             abortError = "The provided build has no workspace.";
@@ -496,6 +626,7 @@ public class TestlabNotifier extends Notifier {
         return true;
     }
 
+
     @Override
     public DescriptorImpl getDescriptor() {
         // see Descriptor javadoc for more about what a descriptor is.
@@ -504,6 +635,7 @@ public class TestlabNotifier extends Notifier {
 
     // this annotation tells Hudson that this is the implementation of an extension point
     @Extension
+    @Symbol("melioraTestlab")
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         // company id of the testlab which to publish to
         private String companyId;
@@ -665,6 +797,26 @@ public class TestlabNotifier extends Notifier {
             return usingonpremise;
         }
 
+        @DataBoundSetter
+        public void setCompanyId(String companyId) {
+            this.companyId = companyId;
+        }
+
+        @DataBoundSetter
+        public void setApiKey(Secret apiKey) {
+            this.apiKey = apiKey;
+        }
+
+        @DataBoundSetter
+        public void setTestCaseMappingField(String testCaseMappingField) {
+            this.testCaseMappingField = testCaseMappingField;
+        }
+
+        @DataBoundSetter
+        public void setUsingonpremise(Usingonpremise usingonpremise) {
+            this.usingonpremise = usingonpremise;
+        }
+
         @DataBoundConstructor
         public AdvancedSettings(String companyId, Secret apiKey, String testCaseMappingField, Usingonpremise usingonpremise) {
             this.companyId = companyId;
@@ -695,6 +847,11 @@ public class TestlabNotifier extends Notifier {
             return onpremiseurl;
         }
 
+        @DataBoundSetter
+        public void setOnpremiseurl(String onpremiseurl) {
+            this.onpremiseurl = onpremiseurl;
+        }
+
         @DataBoundConstructor
         public Usingonpremise(String onpremiseurl) {
             this.onpremiseurl = onpremiseurl;
@@ -721,6 +878,11 @@ public class TestlabNotifier extends Notifier {
             return mergeAsSingleIssue;
         }
 
+        @DataBoundSetter
+        public void setMergeAsSingleIssue(boolean mergeAsSingleIssue) {
+            this.mergeAsSingleIssue = mergeAsSingleIssue;
+        }
+
         // if set issues are automatically assigned to this user
         private String assignToUser;
 
@@ -728,8 +890,18 @@ public class TestlabNotifier extends Notifier {
             return assignToUser;
         }
 
+        @DataBoundSetter
+        public void setAssignToUser(String assignToUser) {
+            this.assignToUser = assignToUser;
+        }
+
         // if set we try to reopen existing matching issues on push
         private boolean reopenExisting;
+
+        @DataBoundSetter
+        public void setReopenExisting(boolean reopenExisting) {
+            this.reopenExisting = reopenExisting;
+        }
 
         public boolean isReopenExisting() {
             return reopenExisting;
@@ -810,6 +982,26 @@ public class TestlabNotifier extends Notifier {
             return tapMappingPrefix;
         }
 
+        @DataBoundSetter
+        public void setTapTestsAsSteps(boolean tapTestsAsSteps) {
+            this.tapTestsAsSteps = tapTestsAsSteps;
+        }
+
+        @DataBoundSetter
+        public void setTapFileNameInIdentifier(boolean tapFileNameInIdentifier) {
+            this.tapFileNameInIdentifier = tapFileNameInIdentifier;
+        }
+
+        @DataBoundSetter
+        public void setTapTestNumberInIdentifier(boolean tapTestNumberInIdentifier) {
+            this.tapTestNumberInIdentifier = tapTestNumberInIdentifier;
+        }
+
+        @DataBoundSetter
+        public void setTapMappingPrefix(String tapMappingPrefix) {
+            this.tapMappingPrefix = tapMappingPrefix;
+        }
+
         @DataBoundConstructor
         public PublishTap(boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, boolean tapTestsAsSteps, String tapMappingPrefix) {
             this.tapFileNameInIdentifier = tapFileNameInIdentifier;
@@ -849,6 +1041,16 @@ public class TestlabNotifier extends Notifier {
             return robotCatenateParentKeywords;
         }
 
+        @DataBoundSetter
+        public void setRobotOutput(String robotOutput) {
+            this.robotOutput = robotOutput;
+        }
+
+        @DataBoundSetter
+        public void setRobotCatenateParentKeywords(boolean robotCatenateParentKeywords) {
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
+        }
+
         @DataBoundConstructor
         public PublishRobot(String robotOutput, boolean robotCatenateParentKeywords) {
             this.robotOutput = robotOutput;
@@ -875,6 +1077,11 @@ public class TestlabNotifier extends Notifier {
 
         public String getImportTestCasesRootCategory() {
             return importTestCasesRootCategory;
+        }
+
+        @DataBoundSetter
+        public void setImportTestCasesRootCategory(String importTestCasesRootCategory) {
+            this.importTestCasesRootCategory = importTestCasesRootCategory;
         }
 
         @DataBoundConstructor
