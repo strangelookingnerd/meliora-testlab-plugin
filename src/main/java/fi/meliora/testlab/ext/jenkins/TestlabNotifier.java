@@ -3,11 +3,15 @@ package fi.meliora.testlab.ext.jenkins;
 import hudson.*;
 import hudson.model.*;
 import hudson.tasks.*;
+import hudson.util.ListBoxModel;
 import hudson.util.PluginServletFilter;
 import hudson.util.Secret;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.StringUtils;
 import org.jenkinsci.Symbol;
+import org.kohsuke.accmod.Restricted;
+import org.kohsuke.accmod.restrictions.NoExternalUse;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
@@ -15,12 +19,11 @@ import org.kohsuke.stapler.StaplerRequest;
 import javax.annotation.Nonnull;
 import javax.servlet.ServletException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static fi.meliora.testlab.ext.rest.model.TestResult.*;
 
 /**
  * A post build action to publish test results to Meliora Testlab.
@@ -41,51 +44,65 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
 
         This notifier can also be used as a Pipeline step:
 
-        post {
-            always {
-                junit '** /build/test-results/** /*.xml'
-                melioraTestlab(
-                    projectKey: 'PRJX',
-                    testRunTitle: 'Automated tests',
-                    comment: 'Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL}',
-                    milestone: 'M1',
-                    testTargetTitle: 'Version 1.0',
-                    testEnvironmentTitle: 'integration-env',
-                    tags: 'jenkins nightly',
-                    parameters: 'BROWSER, USERNAME',
-                    issuesSettings: [
-                        mergeAsSingleIssue: true,
-                        reopenExisting: true,
-                        assignToUser: 'agentsmith'
-                    ],
-                    importTestCases: [
-                        importTestCasesRootCategory: 'Imported/Jenkins'
-                    ],
-                    publishTap: [
-                        tapTestsAsSteps: true,
-                        tapFileNameInIdentifier: true,
-                        tapTestNumberInIdentifier: false,
-                        tapMappingPrefix: 'tap-'
-                    ],
-                    publishRobot: [
-                        robotOutput: '** /output.xml',
-                        robotCatenateParentKeywords: true
-                    ],
-                    advancedSettings: [
-                        companyId: 'testcompany',
-                        apiKey: hudson.util.Secret.fromString('verysecretapikey'),
-                        testCaseMappingField: 'Test class',
-                        usingonpremise: [
-                            onpremiseurl: 'http://testcompany:8080/'
+        pipeline {
+            agent any
+            stages {
+            ...
+            }
+            post {
+                always {
+                    junit '** /build/test-results/** /*.xml'
+                    melioraTestlab(
+                        projectKey: 'PRJX',
+                        ruleset: 'ruleset to use for mapping',
+                        automationSource: 'identifying source for the results'
+
+                        rulesetSettings: [
+                            testRunTitle: 'Automated tests',
+                            milestone: 'M1',
+                            testTargetTitle: 'Version 1.0',
+                            testEnvironmentTitle: 'integration-env',
+
+                            tags: 'jenkins nightly',
+
+                            addIssueStrategy: 'DONOTADD' | 'ADDPERTESTRUN' | 'ADDPERTESTCASE' | 'ADDPERRESULT',
+                            reopenExisting: true,
+                            assignToUser: 'agentsmith',
+
+                            robotCatenateParentKeywords: true
+                        ],
+
+                        description: 'Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL}',
+                        parameters: 'BROWSER, USERNAME',
+
+                        publishTap: [
+                            tapTestsAsSteps: true,
+                            tapFileNameInIdentifier: true,
+                            tapTestNumberInIdentifier: false,
+                            tapMappingPrefix: 'tap-'
+                        ],
+
+                        publishRobot: [
+                            robotOutput: '** /output.xml'
+                        ],
+
+                        advancedSettings: [
+                            companyId: 'testcompany',
+                            apiKey: hudson.util.Secret.fromString('verysecretapikey'),
+                            usingonpremise: [
+                                onpremiseurl: 'http://testcompany:8080/'
+                            ]
                         ]
-                    ]
-                )
+                    )
+                }
             }
         }
     */
 
-    public static final String DEFAULT_COMMENT_TEMPLATE
+    public static final String DEFAULT_DESCRIPTION_TEMPLATE
             = "Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL} - ${BUILD_STATUS}";
+
+    public static final String DEFAULT_AUTOMATIONSOURCE = "${JOB_NAME}";
 
     /**
      * Note: All optional parameters need a setter annotated with @DataBoundSetter
@@ -98,71 +115,56 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         return projectKey;
     }
 
-    // name of the test run to create or update at Testlab side
-    private String testRunTitle;
+//    @DataBoundSetter
+//    public void setProjectKey(String projectKey) {
+//        this.projectKey = projectKey;
+//    }
 
-    public String getTestRunTitle() {
-        return testRunTitle;
-    }
+    // ruleset to use to map the results to test case
+    private String ruleset;
 
-    // comment of the test run to create or update at Testlab side
-    private String comment;
-
-    public String getComment() {
-        return comment;
-    }
-
-    @DataBoundSetter
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
-
-    // identifier or a title of a milestone the results are bound to in Testlab
-    private String milestone;
-
-    public String getMilestone() {
-        return milestone;
+    public String getRuleset() {
+        return ruleset;
     }
 
     @DataBoundSetter
-    public void setMilestone(String milestone) {
-        this.milestone = milestone;
+    public void setRuleset(String ruleset) {
+        this.ruleset = ruleset;
     }
 
-    // title of the version the results are bound to in Testlab
-    private String testTargetTitle;
+    // overridden ruleset settings
+    private RulesetSettings rulesetSettings;
 
-    public String getTestTargetTitle() {
-        return testTargetTitle;
-    }
-
-    @DataBoundSetter
-    public void setTestTargetTitle(String testTargetTitle) {
-        this.testTargetTitle = testTargetTitle;
-    }
-
-    // title of the environment the results are bound to in Testlab
-    private String testEnvironmentTitle;
-
-    public String getTestEnvironmentTitle() {
-        return testEnvironmentTitle;
+    public RulesetSettings getRulesetSettings() {
+        return rulesetSettings;
     }
 
     @DataBoundSetter
-    public void setTestEnvironmentTitle(String testEnvironmentTitle) {
-        this.testEnvironmentTitle = testEnvironmentTitle;
+    public void setRulesetSettings(RulesetSettings rulesetSettings) {
+        this.rulesetSettings = rulesetSettings;
     }
 
-    // tags for the test run
-    private String tags;
+    private String automationSource;
 
-    public String getTags() {
-        return tags;
+    public String getAutomationSource() {
+        return automationSource;
     }
 
     @DataBoundSetter
-    public void setTags(String tags) {
-        this.tags = tags;
+    public void setAutomationSource(String automationSource) {
+        this.automationSource = automationSource;
+    }
+
+    // description of the test run to create or update at Testlab side
+    private String description;
+
+    public String getDescription() {
+        return description;
+    }
+
+    @DataBoundSetter
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     // test case parameters to send from environmental variables
@@ -177,77 +179,16 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         this.parameters = parameters;
     }
 
-    // holder for optional issues settings
-    private IssuesSettings issuesSettings;
+    // If set, publish Robot Framework results
+    private PublishRobot publishRobot;
 
-    public IssuesSettings getIssuesSettings() {
-        return issuesSettings;
+    public PublishRobot getPublishRobot() {
+        return publishRobot;
     }
 
     @DataBoundSetter
-    public void setIssuesSettings(IssuesSettings issuesSettings) {
-        this.issuesSettings = issuesSettings;
-    }
-
-    // if true added issues are merged and added as a single issue
-    private boolean mergeAsSingleIssue;
-
-    public boolean isMergeAsSingleIssue() {
-        return mergeAsSingleIssue;
-    }
-
-    // if set issues are automatically assigned to this user
-    private String assignToUser;
-
-    public String getAssignToUser() {
-        return assignToUser;
-    }
-
-    // if set we try to reopen existing matching issues on push
-    private boolean reopenExisting;
-
-    public boolean isReopenExisting() {
-        return reopenExisting;
-    }
-
-    // holder for optional advanced settings
-    private AdvancedSettings advancedSettings;
-
-    public AdvancedSettings getAdvancedSettings() {
-        return advancedSettings;
-    }
-
-    @DataBoundSetter
-    public void setAdvancedSettings(AdvancedSettings advancedSettings) {
-        this.advancedSettings = advancedSettings;
-    }
-
-    // job specific company ID of target testlab, optional
-    private String companyId;
-
-    public String getCompanyId() {
-        return companyId;
-    }
-
-    // job specific apikey of target testlab, optional
-    private Secret apiKey;
-
-    public Secret getApiKey() {
-        return apiKey;
-    }
-
-    // title of the Testlab custom field to use to map the unit tests to Testlab's test cases, optional
-    private String testCaseMappingField;
-
-    public String getTestCaseMappingField() {
-        return testCaseMappingField;
-    }
-
-    // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
-    private Usingonpremise usingonpremise;
-
-    public Usingonpremise getUsingonpremise() {
-        return usingonpremise;
+    public void setPublishRobot(PublishRobot publishRobot) {
+        this.publishRobot = publishRobot;
     }
 
     // if set, publish TAP results
@@ -262,77 +203,122 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         this.publishTap = publishTap;
     }
 
-    // If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file
-    private boolean tapTestsAsSteps;
+    // holder for optional advanced settings
+    private AdvancedSettings advancedSettings;
 
-    public boolean isTapTestsAsSteps() {
-        return tapTestsAsSteps;
-    }
-
-    // If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix
-    private boolean tapFileNameInIdentifier;
-
-    public boolean isTapFileNameInIdentifier() {
-        return tapFileNameInIdentifier;
-    }
-
-    // If set, the mapping identifier will not include the test number of the TAP test
-    private boolean tapTestNumberInIdentifier;
-
-    public boolean isTapTestNumberInIdentifier() {
-        return tapTestNumberInIdentifier;
-    }
-
-    // If set, mapping identifiers sent will be prefixed with this value
-    private String tapMappingPrefix;
-
-    public String getTapMappingPrefix() {
-        return tapMappingPrefix;
-    }
-
-    // if set, automatically creates test cases when publishing
-    public ImportTestCases importTestCases;
-
-    public ImportTestCases getImportTestCases() {
-        return importTestCases;
+    public AdvancedSettings getAdvancedSettings() {
+        return advancedSettings;
     }
 
     @DataBoundSetter
-    public void setImportTestCases(ImportTestCases importTestCases) {
-        this.importTestCases = importTestCases;
+    public void setAdvancedSettings(AdvancedSettings advancedSettings) {
+        this.advancedSettings = advancedSettings;
     }
 
-    // If set, sets the root category path where the test cases are created. By default, "Import".
-    private String importTestCasesRootCategory;
+    /* pre-ruleset configuration, see readResolve */
+    private transient String testRunTitle;
+    private transient String milestone;
+    private transient String testTargetTitle;
+    private transient String testEnvironmentTitle;
+    private transient IssuesSettings issuesSettings;
+    private transient ImportTestCases importTestCases;
+    private transient String tags;
+    private transient String comment;
+    /* /pre-ruleset configuration */
 
-    public String getImportTestCasesRootCategory() {
-        return importTestCasesRootCategory;
-    }
+    protected Object readResolve() {
+        //// migrate "pre-ruleset" configuration, if any
+        //
+        // if this plugin is run with old styled configuration, we pick these values here and
+        //  persists them to a new ruleset-compatible model
 
-    // If set, publish Robot Framework results
-    private PublishRobot publishRobot;
+        if(!isBlank(testRunTitle)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.testRunTitle = testRunTitle;
+            log.info("Migrated pre-ruleset configuration testRunTitle: " + testRunTitle);
+            testRunTitle = null;
+        }
 
-    public PublishRobot getPublishRobot() {
-        return publishRobot;
-    }
+        if(!isBlank(milestone)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.milestone = milestone;
+            log.info("Migrated pre-ruleset configuration milestone: " + milestone);
+            milestone = null;
+        }
 
-    @DataBoundSetter
-    public void setPublishRobot(PublishRobot publishRobot) {
-        this.publishRobot = publishRobot;
-    }
+        if(!isBlank(testTargetTitle)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.testTargetTitle = testTargetTitle;
+            log.info("Migrated pre-ruleset configuration testTargetTitle: " + testTargetTitle);
+            testTargetTitle = null;
+        }
 
-    // Robot output.xml file path
-    private String robotOutput;
+        if(!isBlank(testEnvironmentTitle)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.testEnvironmentTitle = testEnvironmentTitle;
+            log.info("Migrated pre-ruleset configuration testEnvironmentTitle: " + testEnvironmentTitle);
+            testEnvironmentTitle = null;
+        }
 
-    public String getRobotOutput() {
-        return robotOutput;
-    }
+        if(issuesSettings != null) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            if(issuesSettings.mergeAsSingleIssue)
+                rulesetSettings.setAddIssueStrategy(AddIssueStrategy.ADDPERTESTCASE);
+            else
+                rulesetSettings.setAddIssueStrategy(AddIssueStrategy.ADDPERRESULT);
 
-    // If set, catenates all sub keywords of a keyword as a single step in result
-    private boolean robotCatenateParentKeywords;
+            rulesetSettings.assignToUser = issuesSettings.assignToUser;
+            rulesetSettings.reopenExisting = issuesSettings.reopenExisting;
+            log.info("Migrated pre-ruleset configuration issuesSettings: " + issuesSettings);
+            issuesSettings = null;
+        }
 
-    public boolean isRobotCatenateParentKeywords() {
-        return robotCatenateParentKeywords;
+        if(importTestCases != null) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.importTestCases = true;
+            rulesetSettings.importTestCasesRootCategory = importTestCases.importTestCasesRootCategory;
+            log.info("Migrated pre-ruleset configuration importTestCases: " + importTestCases);
+            importTestCases = null;
+        }
+
+        if(advancedSettings != null && !isBlank(advancedSettings.testCaseMappingField)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.testCaseMappingField = advancedSettings.testCaseMappingField;
+            log.info("Migrated pre-ruleset configuration advancedSettings.testCaseMappingField: " + advancedSettings.testCaseMappingField);
+            advancedSettings.testCaseMappingField = null;
+        }
+
+        if(publishRobot != null && publishRobot.robotCatenateParentKeywords != null && !publishRobot.robotCatenateParentKeywords) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+            rulesetSettings.robotCatenateParentKeywords = publishRobot.robotCatenateParentKeywords;
+            log.info("Migrated pre-ruleset configuration publishRobot.robotCatenateParentKeywords: " + publishRobot.robotCatenateParentKeywords);
+        }
+
+        if(!isBlank(tags)) {
+            if(rulesetSettings == null)
+                rulesetSettings = new RulesetSettings();
+
+            //used to use space separated tags, now comma separated
+            String commaSeparatedTags = StringUtils.replace(tags, " ", ",");
+            rulesetSettings.setTags(commaSeparatedTags);
+        }
+
+        if(!isBlank(comment)) {
+            description = comment;
+            log.info("Migrated pre-ruleset configuration comment to description as: " + description);
+        }
+
+        log.severe("Configuration resolved: " + this);
+
+        return this;
     }
 
     /**
@@ -340,49 +326,16 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
      * values from the configuration form page with matching parameter names.
      */
     @DataBoundConstructor
-    public TestlabNotifier(String projectKey, String testRunTitle, String comment, String milestone, String testTargetTitle, String testEnvironmentTitle, String tags, String parameters, IssuesSettings issuesSettings, AdvancedSettings advancedSettings, PublishRobot publishRobot, PublishTap publishTap, ImportTestCases importTestCases) {
+    public TestlabNotifier(String projectKey, String ruleset, RulesetSettings rulesetSettings, String description, String parameters, PublishRobot publishRobot, PublishTap publishTap, AdvancedSettings advancedSettings) {
+        super();
         this.projectKey = projectKey;
-        this.testRunTitle = testRunTitle;
-        this.comment = comment;
-        this.milestone = milestone;
-        this.testTargetTitle = testTargetTitle;
-        this.testEnvironmentTitle = testEnvironmentTitle;
-        this.tags = tags;
+        this.ruleset = ruleset;
+        this.rulesetSettings = rulesetSettings;
+        this.description = description;
         this.parameters = parameters;
-
-        this.issuesSettings = issuesSettings;
-        if(issuesSettings != null) {
-            this.mergeAsSingleIssue = issuesSettings.isMergeAsSingleIssue();
-            this.assignToUser = issuesSettings.getAssignToUser();
-            this.reopenExisting = issuesSettings.isReopenExisting();
-        }
-
-        this.advancedSettings = advancedSettings;
-        if(advancedSettings != null) {
-            this.companyId = advancedSettings.getCompanyId();
-            this.apiKey = advancedSettings.getApiKey();
-            this.testCaseMappingField = advancedSettings.getTestCaseMappingField();
-            this.usingonpremise = advancedSettings.getUsingonpremise();
-        }
-
         this.publishRobot = publishRobot;
-        if(publishRobot != null) {
-            this.robotOutput = publishRobot.getRobotOutput();
-            this.robotCatenateParentKeywords = publishRobot.isRobotCatenateParentKeywords();
-        }
-
         this.publishTap = publishTap;
-        if(publishTap != null) {
-            this.tapFileNameInIdentifier = publishTap.isTapFileNameInIdentifier();
-            this.tapTestNumberInIdentifier = publishTap.isTapTestNumberInIdentifier();
-            this.tapTestsAsSteps = publishTap.isTapTestsAsSteps();
-            this.tapMappingPrefix = publishTap.getTapMappingPrefix();
-        }
-
-        this.importTestCases = importTestCases;
-        if(importTestCases != null) {
-            this.importTestCasesRootCategory = importTestCases.getImportTestCasesRootCategory();
-        }
+        this.advancedSettings = advancedSettings;
     }
 
     /**
@@ -474,27 +427,26 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         log.fine("perform(): " + this + ", descriptor: " + d);
 
         // get job specific settings if any and fallback to global configuration
-        Secret secretKey = apiKey;
+        Secret secretKey = advancedSettings != null ? advancedSettings.apiKey : null;
         if(secretKey == null || "".equals(secretKey.getPlainText())) {
             // prefer key from global settings if the job has none
-            secretKey = d.getApiKey();
+            secretKey = d.apiKey;
         }
         String runApiKey = secretKey != null ? secretKey.getPlainText() : null;
-        String runTestCaseMappingField = isBlank(testCaseMappingField) ? d.getTestCaseMappingField() : testCaseMappingField;
 
-        Usingonpremise uop = advancedSettings != null && advancedSettings.getUsingonpremise() != null
-                ? advancedSettings.getUsingonpremise() : d.getUsingonpremise();
+        Usingonpremise uop = advancedSettings != null && advancedSettings.usingonpremise != null
+                ? advancedSettings.usingonpremise : d.usingonpremise;
 
         String runCompanyId = null, runOnpremiseurl = null;
         boolean runUsingonpremise = false;
 
-        if(uop != null && !isBlank(uop.getOnpremiseurl())) {
+        if(uop != null && !isBlank(uop.onpremiseurl)) {
             //
             // we apply onpremise settings only if they are complete
             //
             runCompanyId = null;
             runUsingonpremise = true;
-            runOnpremiseurl = uop.getOnpremiseurl();
+            runOnpremiseurl = uop.onpremiseurl;
 
             log.fine("using on-premise with url: " + runOnpremiseurl);
 
@@ -502,7 +454,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             //
             // otherwise we use companyId if present
             //
-            runCompanyId = !isBlank(companyId) ? companyId : d.getCompanyId();
+            runCompanyId = !isBlank(advancedSettings != null ? advancedSettings.companyId : null) ? advancedSettings.companyId : d.companyId;
 
             log.fine("using hosted with company id: " + runCompanyId);
         }
@@ -528,14 +480,16 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         }
 
         String runProjectKey = vr.replace(projectKey);
-        String runMilestone = vr.replace(milestone);
-        String runTestRunTitle = vr.replace(testRunTitle);
-        String runComment = vr.replace(isBlank(comment) ? DEFAULT_COMMENT_TEMPLATE : comment);
-        String runTestTargetTitle = vr.replace(testTargetTitle);
-        String runTestEnvironmentTitle = vr.replace(testEnvironmentTitle);
-        String runTags = vr.replace(tags);
-        String runAssignToUser = vr.replace(assignToUser);
-        runTestCaseMappingField = vr.replace(runTestCaseMappingField);
+        String runAutomationSource = vr.replace(isBlank(automationSource) ? DEFAULT_AUTOMATIONSOURCE : automationSource);
+        String runMilestone = vr.replace(rulesetSettings != null ? rulesetSettings.milestone : null);
+        String runTestRunTitle = vr.replace(rulesetSettings != null ? rulesetSettings.testRunTitle : null);
+        String runDescription = vr.replace(isBlank(description) ? DEFAULT_DESCRIPTION_TEMPLATE : description);
+        String runTestTargetTitle = vr.replace(rulesetSettings != null ? rulesetSettings.testTargetTitle : null);
+        String runTestEnvironmentTitle = vr.replace(rulesetSettings != null ? rulesetSettings.testEnvironmentTitle : null);
+        String runTags = vr.replace(rulesetSettings != null ? rulesetSettings.tags : null);
+        String runAssignToUser = vr.replace(rulesetSettings != null ? rulesetSettings.assignToUser : null);
+        String runRuleset = vr.replace(ruleset);
+        String resultName = vr.replace("${BUILD_URL}");
 
         String runParameterVariables = vr.replace(parameters);
         Map<String, String> runParameters = null;
@@ -555,7 +509,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             }
         }
 
-        String runTapMappingPrefix = vr.replace(tapMappingPrefix);
+        String runTapMappingPrefix = vr.replace(publishTap != null ? publishTap.tapMappingPrefix : null);       // nop on null
 
         String abortError = null;
         if(workspace == null) {
@@ -574,22 +528,16 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             abortError = "Could not publish results to Testlab: Api Key is not set. Configure it for your job or globally in Jenkins' configuration.";
         }
 
-        if(isBlank(runTestCaseMappingField)) {
-            abortError = "Could not publish results to Testlab: Test case mapping field is not set. Configure it for your job or globally in Jenkins' configuration or, if the value contains variable tags make sure they have values.";
-        }
-
         if(isBlank(runProjectKey)) {
             abortError = "Could not publish results to Testlab: Project key is not set. Configure it for your job or, if the value contains variable tags make sure they have values.";
         }
 
-        if(isBlank(runTestRunTitle)) {
-            abortError = "Could not publish results to Testlab: Test run title is not set. Configure it for your job or, if the value contains variable tags make sure they have values.";
-        }
-
         if(abortError != null) {
+            log.severe("Aborting with configuration: " + toString());
             listener.error(abortError);
             throw new AbortException(abortError);
         }
+
 
         Sender.sendResults(
                 workspace,
@@ -598,30 +546,28 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
                 runOnpremiseurl,
                 runApiKey,
                 runProjectKey,
+                runRuleset,
                 runMilestone,
                 runTestRunTitle,
-                runComment,
+                runDescription,
                 runTestTargetTitle,
                 runTestEnvironmentTitle,
                 runTags,
                 runParameters,
-                issuesSettings != null,
-                mergeAsSingleIssue,
-                reopenExisting,
+                rulesetSettings != null ? rulesetSettings.addIssueStrategy : null,
+                rulesetSettings != null ? rulesetSettings.reopenExisting : null,
                 !isBlank(runAssignToUser) ? runAssignToUser : null,
                 publishTap != null,
-                tapTestsAsSteps,
-                tapFileNameInIdentifier,
-                tapTestNumberInIdentifier,
+                publishTap != null && publishTap.tapTestsAsSteps,
+                publishTap != null && publishTap.tapFileNameInIdentifier,
+                publishTap != null && publishTap.tapTestNumberInIdentifier,
                 runTapMappingPrefix,
-                importTestCases != null,
-                importTestCasesRootCategory,
-                runTestCaseMappingField,
                 publishRobot != null,
-                robotOutput,
-                robotCatenateParentKeywords,
-                build
-        );
+                publishRobot != null ? publishRobot.robotOutput : null,
+                rulesetSettings != null ? rulesetSettings.robotCatenateParentKeywords : null,
+                runAutomationSource,
+                resultName,
+                build);
 
         return true;
     }
@@ -638,22 +584,35 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
     @Symbol("melioraTestlab")
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
         // company id of the testlab which to publish to
-        private String companyId;
+        public String companyId;
         // testlab api key
-        private Secret apiKey;
-        // custom field name to map the test ids against with
-        private String testCaseMappingField;
+        public Secret apiKey;
         // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
-        private Usingonpremise usingonpremise;
+        public Usingonpremise usingonpremise;
         // defines CORS settings for calls from Testlab -> Jenkins API
-        private Cors cors;
+        public Cors cors;
+
+        /* pre-ruleset configuration, see readResolve */
+        // custom field name to map the test ids against with
+        private transient String testCaseMappingField;
+        /* /pre-ruleset configuration, see readResolve */
 
         private CORSFilter CORSFilter;
 
         public DescriptorImpl() {
             load();
 
-            log.fine("load: " + companyId + ", api key hidden, " + testCaseMappingField + ", " + usingonpremise + ", " + usingonpremise + ", " + cors);
+            log.fine("load: " + companyId + ", api key hidden, " + usingonpremise + ", " + usingonpremise + ", " + cors);
+
+            if(!isBlank(testCaseMappingField)) {
+                log.warning(
+                        "Meliora Testlab Plugin: In plugin settings, you have 'Test case mapping field' set" +
+                        " as '" + testCaseMappingField + "'. This field is deprecated and should be set to each job's" +
+                        " ruleset rules at Testlab side. See the plugin documentation on" +
+                        " changes related to the introduction of ruleset-concept in Testlab. As deprecated, this value" +
+                        " _will be ignored_."
+                );
+            }
 
             // let's inject our CORSFilter as we're at it
             try {
@@ -689,7 +648,6 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             // persist configuration
             companyId = json.getString("companyId");
             apiKey = Secret.fromString(json.getString("apiKey"));
-            testCaseMappingField = json.getString("testCaseMappingField");
 
             JSONObject uop = json.getJSONObject("usingonpremise");
             if(uop != null && !uop.isNullObject() && !uop.isEmpty()) {
@@ -705,7 +663,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
                 cors = null;
             }
 
-            log.fine("configure: " + companyId + ", api key hidden, " + testCaseMappingField + ", " + usingonpremise + ", " + cors);
+            log.fine("configure: " + companyId + ", api key hidden, " + usingonpremise + ", " + cors);
 
             save();
 
@@ -715,12 +673,12 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         }
 
         protected void configureCORS() {
-            CORSFilter.setEnabled(cors != null && !isBlank(cors.getOrigin()));
-            if(cors != null && cors.getOrigin() != null) {
+            CORSFilter.setEnabled(cors != null && !isBlank(cors.origin));
+            if(cors != null && cors.origin != null) {
                 //
                 // parse a comma separated list to a list of allowed origins
                 //
-                String[] spl = cors.getOrigin().split(",");
+                String[] spl = cors.origin.split(",");
                 List<String> origins = new ArrayList<String>();
                 for(String o : spl) {
                     origins.add(o.trim());
@@ -729,28 +687,62 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             }
         }
 
-        public String getCompanyId() {
-            return companyId;
+        public String getDefaultDescriptionTemplate() {
+            return DEFAULT_DESCRIPTION_TEMPLATE;
         }
 
-        public Secret getApiKey() {
-            return apiKey;
+        public String getDefaultAutomationSource() {
+            return DEFAULT_AUTOMATIONSOURCE;
         }
 
-        public String getTestCaseMappingField() {
-            return testCaseMappingField;
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillAddIssuesItems() {
+            return getRulesetDefaultBooleanModel();
         }
 
-        public Usingonpremise getUsingonpremise() {
-            return usingonpremise;
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillMergeAsSingleIssueItems() {
+            return getRulesetDefaultBooleanModel();
         }
 
-        public Cors getCors() {
-            return cors;
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillReopenExistingItems() {
+            return getRulesetDefaultBooleanModel();
         }
 
-        public String getDefaultCommentTemplate() {
-            return DEFAULT_COMMENT_TEMPLATE;
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillImportTestCasesItems() {
+            return getRulesetDefaultBooleanModel();
+        }
+
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillRobotCatenateParentKeywordsItems() {
+            return getRulesetDefaultBooleanModel();
+        }
+
+        @SuppressWarnings("unused")
+        @Restricted(NoExternalUse.class)
+        public ListBoxModel doFillAddIssueStrategyItems() {
+            ListBoxModel m = new ListBoxModel();
+            m.add("[Ruleset default]", "null");
+            m.add("Do not add issues", AddIssueStrategy.DONOTADD.toString());
+            m.add("Add an issue per test run", AddIssueStrategy.ADDPERTESTRUN.toString());
+            m.add("Add an issue per Testlab test case", AddIssueStrategy.ADDPERTESTCASE.toString());
+            m.add("Add an issue per test result", AddIssueStrategy.ADDPERRESULT.toString());
+            return m;
+        }
+
+        protected ListBoxModel getRulesetDefaultBooleanModel() {
+            ListBoxModel m = new ListBoxModel();
+            m.add("[Ruleset default]", "null");
+            m.add("Yes", "true");
+            m.add("No", "false");
+            return m;
         }
 
         @Override
@@ -758,9 +750,188 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             return "DescriptorImpl{" +
                     "companyId='" + companyId + '\'' +
                     ", apiKey='hidden'" +
-                    ", testCaseMappingField='" + testCaseMappingField + '\'' +
                     ", usingonpremise=" + usingonpremise +
                     ", cors=" + cors +
+                    '}';
+        }
+    }
+
+    /**
+     * Optional job config block for ruleset settings.
+     *
+     * If set implicitly implies that some ruleset settings should be overridden.
+     */
+    public static final class RulesetSettings {
+        // name of the test run to create or update at Testlab side
+        private String testRunTitle;
+
+        public String getTestRunTitle() {
+            return testRunTitle;
+        }
+
+        @DataBoundSetter
+        public void setTestRunTitle(String testRunTitle) {
+            this.testRunTitle = testRunTitle;
+        }
+
+        // identifier or a title of a milestone the results are bound to in Testlab
+        private String milestone;
+
+        public String getMilestone() {
+            return milestone;
+        }
+
+        @DataBoundSetter
+        public void setMilestone(String milestone) {
+            this.milestone = milestone;
+        }
+
+        // title of the version the results are bound to in Testlab
+        private String testTargetTitle;
+
+        public String getTestTargetTitle() {
+            return testTargetTitle;
+        }
+
+        @DataBoundSetter
+        public void setTestTargetTitle(String testTargetTitle) {
+            this.testTargetTitle = testTargetTitle;
+        }
+
+        // title of the environment the results are bound to in Testlab
+        private String testEnvironmentTitle;
+
+        public String getTestEnvironmentTitle() {
+            return testEnvironmentTitle;
+        }
+
+        @DataBoundSetter
+        public void setTestEnvironmentTitle(String testEnvironmentTitle) {
+            this.testEnvironmentTitle = testEnvironmentTitle;
+        }
+
+        private AddIssueStrategy addIssueStrategy;
+        public AddIssueStrategy getAddIssueStrategy() { return addIssueStrategy; }
+        @DataBoundSetter
+        public void setAddIssueStrategy(AddIssueStrategy addIssueStrategy) {
+            this.addIssueStrategy = addIssueStrategy;
+        }
+
+        // if set issues are automatically assigned to this user
+        private String assignToUser;
+
+        public String getAssignToUser() {
+            return assignToUser;
+        }
+
+        @DataBoundSetter
+        public void setAssignToUser(String assignToUser) {
+            this.assignToUser = assignToUser;
+        }
+
+        // if set we try to reopen existing matching issues on push
+        private Boolean reopenExisting;
+
+        @DataBoundSetter
+        public void setReopenExisting(Boolean reopenExisting) {
+            this.reopenExisting = reopenExisting;
+        }
+
+        public Boolean getReopenExisting() {
+            return reopenExisting;
+        }
+
+        // if true we try to automatically create test cases for tests
+        private Boolean importTestCases;
+
+        @DataBoundSetter
+        public void setImportTestCases(Boolean importTestCases) {
+            this.importTestCases = importTestCases;
+        }
+
+        public Boolean getImportTestCases() {
+            return importTestCases;
+        }
+
+        private String tags;
+        public String getTags() {
+            return tags;
+        }
+        @DataBoundSetter
+        public void setTags(String tags) {
+            this.tags = tags;
+        }
+
+        // test category where the automatically created test cases will be created to. Defaults to 'Import'.
+        @Deprecated
+        private String importTestCasesRootCategory;
+
+        @Deprecated
+        @DataBoundSetter
+        public void setImportTestCasesRootCategory(String importTestCasesRootCategory) {
+            this.importTestCasesRootCategory = importTestCasesRootCategory;
+        }
+
+        @Deprecated
+        public String getImportTestCasesRootCategory() {
+            return importTestCasesRootCategory;
+        }
+
+        // if set, all keywords and their sub keywords are catenated to a single step in the result when possible
+        private Boolean robotCatenateParentKeywords;
+
+        @DataBoundSetter
+        public void setRobotCatenateParentKeywords(Boolean robotCatenateParentKeywords) {
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
+        }
+
+        public Boolean getRobotCatenateParentKeywords() {
+            return robotCatenateParentKeywords;
+        }
+
+        // testlab field to use to store the mapping ID's of automated tests when automatically creating test cases
+        @Deprecated
+        private String testCaseMappingField;
+
+        @Deprecated
+        @DataBoundSetter
+        public void setTestCaseMappingField(String testCaseMappingField) {
+            this.testCaseMappingField = testCaseMappingField;
+        }
+
+        @Deprecated
+        public String getTestCaseMappingField() {
+            return testCaseMappingField;
+        }
+
+        public RulesetSettings() {}
+
+        @DataBoundConstructor
+        public RulesetSettings(String testRunTitle, String milestone, String testTargetTitle, String testEnvironmentTitle, AddIssueStrategy addIssueStrategy, Boolean reopenExisting, String assignToUser, Boolean importTestCases, String importTestCasesRootCategory, Boolean robotCatenateParentKeywords, String testCaseMappingField) {
+            this.testRunTitle = testRunTitle;
+            this.milestone = milestone;
+            this.testTargetTitle = testTargetTitle;
+            this.testEnvironmentTitle = testEnvironmentTitle;
+            this.addIssueStrategy = addIssueStrategy;
+            this.reopenExisting = reopenExisting;
+            this.assignToUser = assignToUser;
+            this.importTestCases = importTestCases;
+            this.importTestCasesRootCategory = importTestCasesRootCategory;
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
+            this.testCaseMappingField = testCaseMappingField;
+        }
+
+        @Override
+        public String toString() {
+            return "RulesetSettings{" +
+                    "testRunTitle='" + testRunTitle + '\'' +
+                    ", milestone='" + milestone + '\'' +
+                    ", testTargetTitle='" + testTargetTitle + '\'' +
+                    ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +
+                    ", addIssueStrategy=" + addIssueStrategy +
+                    ", reopenExisting=" + reopenExisting +
+                    ", assignToUser='" + assignToUser + '\'' +
+                    ", robotCatenateParentKeywords=" + robotCatenateParentKeywords +
                     '}';
         }
     }
@@ -776,18 +947,9 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             return companyId;
         }
 
-        // job specific apikey of target testlab, optional
-        private Secret apiKey;
-
-        public Secret getApiKey() {
-            return apiKey;
-        }
-
-        // title of the Testlab custom field to use to map the unit tests to Testlab's test cases, optional
-        private String testCaseMappingField;
-
-        public String getTestCaseMappingField() {
-            return testCaseMappingField;
+        @DataBoundSetter
+        public void setCompanyId(String companyId) {
+            this.companyId = companyId;
         }
 
         // if set, on-premise variant of Testlab is used and Testlab URL should be set and honored
@@ -798,8 +960,15 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         }
 
         @DataBoundSetter
-        public void setCompanyId(String companyId) {
-            this.companyId = companyId;
+        public void setUsingonpremise(Usingonpremise usingonpremise) {
+            this.usingonpremise = usingonpremise;
+        }
+
+        // job specific apikey of target testlab, optional
+        private Secret apiKey;
+
+        public Secret getApiKey() {
+            return apiKey;
         }
 
         @DataBoundSetter
@@ -807,31 +976,25 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             this.apiKey = apiKey;
         }
 
-        @DataBoundSetter
-        public void setTestCaseMappingField(String testCaseMappingField) {
-            this.testCaseMappingField = testCaseMappingField;
-        }
-
-        @DataBoundSetter
-        public void setUsingonpremise(Usingonpremise usingonpremise) {
-            this.usingonpremise = usingonpremise;
-        }
+        /* pre-ruleset configuration, see readResolve */
+        // title of the Testlab custom field to use to map the unit tests to Testlab's test cases, optional
+        public transient String testCaseMappingField;
+        /* /pre-ruleset configuration, see readResolve */
 
         @DataBoundConstructor
         public AdvancedSettings(String companyId, Secret apiKey, String testCaseMappingField, Usingonpremise usingonpremise) {
             this.companyId = companyId;
             this.apiKey = apiKey;
-            this.testCaseMappingField = testCaseMappingField;
             this.usingonpremise = usingonpremise;
+            this.testCaseMappingField = testCaseMappingField;
         }
 
         @Override
         public String toString() {
             return "AdvancedSettings{" +
                     "companyId='" + companyId + '\'' +
-                    ", apiKey='hidden'" +
-                    ", testCaseMappingField='" + testCaseMappingField + '\'' +
                     ", usingonpremise=" + usingonpremise +
+                    ", apiKey='hidden'" +
                     '}';
         }
     }
@@ -871,41 +1034,14 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
      * If set implicitly implies that issues should be added on push.
      */
     public static final class IssuesSettings {
+        /* pre-ruleset configuration, see readResolve */
         // if true added issues are merged and added as a single issue
-        private boolean mergeAsSingleIssue;
-
-        public boolean isMergeAsSingleIssue() {
-            return mergeAsSingleIssue;
-        }
-
-        @DataBoundSetter
-        public void setMergeAsSingleIssue(boolean mergeAsSingleIssue) {
-            this.mergeAsSingleIssue = mergeAsSingleIssue;
-        }
-
+        public boolean mergeAsSingleIssue;
         // if set issues are automatically assigned to this user
-        private String assignToUser;
-
-        public String getAssignToUser() {
-            return assignToUser;
-        }
-
-        @DataBoundSetter
-        public void setAssignToUser(String assignToUser) {
-            this.assignToUser = assignToUser;
-        }
-
+        public String assignToUser;
         // if set we try to reopen existing matching issues on push
-        private boolean reopenExisting;
-
-        @DataBoundSetter
-        public void setReopenExisting(boolean reopenExisting) {
-            this.reopenExisting = reopenExisting;
-        }
-
-        public boolean isReopenExisting() {
-            return reopenExisting;
-        }
+        public boolean reopenExisting;
+        /* /pre-ruleset configuration, see readResolve */
 
         @DataBoundConstructor
         public IssuesSettings(boolean mergeAsSingleIssue, String assignToUser, boolean reopenExisting) {
@@ -917,9 +1053,9 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         @Override
         public String toString() {
             return "IssuesSettings{" +
-                    "mergeAsSingleIssue=" + mergeAsSingleIssue +
-                    ", assignToUser='" + assignToUser + '\'' +
-                    ", reopenExisting=" + reopenExisting +
+                    "mergeAsSingleIssue(pre)=" + mergeAsSingleIssue +
+                    ", assignToUser(pre)='" + assignToUser + '\'' +
+                    ", reopenExisting(pre)=" + reopenExisting +
                     '}';
         }
     }
@@ -933,6 +1069,11 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
 
         public String getOrigin() {
             return origin;
+        }
+
+        @DataBoundSetter
+        public void setOrigin(String origin) {
+            this.origin = origin;
         }
 
         @DataBoundConstructor
@@ -957,29 +1098,8 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         // If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file
         private boolean tapTestsAsSteps;
 
-        // If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix
-        private boolean tapFileNameInIdentifier;
-
-        // If set, the mapping identifier will not include the test number of the TAP test
-        private boolean tapTestNumberInIdentifier;
-
-        // If set, mapping identifiers sent will be prefixed with this value
-        private String tapMappingPrefix;
-
-        public boolean isTapFileNameInIdentifier() {
-            return tapFileNameInIdentifier;
-        }
-
-        public boolean isTapTestNumberInIdentifier() {
-            return tapTestNumberInIdentifier;
-        }
-
         public boolean isTapTestsAsSteps() {
             return tapTestsAsSteps;
-        }
-
-        public String getTapMappingPrefix() {
-            return tapMappingPrefix;
         }
 
         @DataBoundSetter
@@ -987,14 +1107,35 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             this.tapTestsAsSteps = tapTestsAsSteps;
         }
 
+        // If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix
+        private boolean tapFileNameInIdentifier;
+
+        public boolean isTapFileNameInIdentifier() {
+            return tapFileNameInIdentifier;
+        }
+
         @DataBoundSetter
         public void setTapFileNameInIdentifier(boolean tapFileNameInIdentifier) {
             this.tapFileNameInIdentifier = tapFileNameInIdentifier;
         }
 
+        // If set, the mapping identifier will not include the test number of the TAP test
+        private boolean tapTestNumberInIdentifier;
+
+        public boolean isTapTestNumberInIdentifier() {
+            return tapTestNumberInIdentifier;
+        }
+
         @DataBoundSetter
         public void setTapTestNumberInIdentifier(boolean tapTestNumberInIdentifier) {
             this.tapTestNumberInIdentifier = tapTestNumberInIdentifier;
+        }
+
+        // If set, mapping identifiers sent will be prefixed with this value
+        private String tapMappingPrefix;
+
+        public String getTapMappingPrefix() {
+            return tapMappingPrefix;
         }
 
         @DataBoundSetter
@@ -1030,15 +1171,8 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         // Robot output.xml file path
         private String robotOutput;
 
-        // If set, catenates all sub keywords of a keyword as a single step in result
-        private boolean robotCatenateParentKeywords;
-
         public String getRobotOutput() {
             return robotOutput;
-        }
-
-        public boolean isRobotCatenateParentKeywords() {
-            return robotCatenateParentKeywords;
         }
 
         @DataBoundSetter
@@ -1046,22 +1180,22 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             this.robotOutput = robotOutput;
         }
 
-        @DataBoundSetter
-        public void setRobotCatenateParentKeywords(boolean robotCatenateParentKeywords) {
-            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
-        }
+        /* pre-ruleset configuration, see readResolve */
+        // If set, catenates all sub keywords of a keyword as a single step in result
+        public transient Boolean robotCatenateParentKeywords = true;
+        /* /pre-ruleset configuration, see readResolve */
 
         @DataBoundConstructor
-        public PublishRobot(String robotOutput, boolean robotCatenateParentKeywords) {
+        public PublishRobot(String robotOutput, Boolean robotCatenateParentKeywords) {
             this.robotOutput = robotOutput;
-            this.robotCatenateParentKeywords = robotCatenateParentKeywords;
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords == null ? true : robotCatenateParentKeywords;
         }
 
         @Override
         public String toString() {
             return "PublishRobot{" +
                     "robotOutput='" + robotOutput + '\'' +
-                    ", robotCatenateParentKeywords=" + robotCatenateParentKeywords +
+                    "robotCatenateParentKeywords(pre)=" + robotCatenateParentKeywords +
                     '}';
         }
     }
@@ -1071,18 +1205,12 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
      *
      * If set implicitly implies that test cases should be automatically created during the push.
      */
+    @Deprecated
     public static final class ImportTestCases {
+        /* pre-ruleset configuration, see readResolve */
         // If set, sets the root category path where the test cases are created. By default, "Import".
-        private String importTestCasesRootCategory;
-
-        public String getImportTestCasesRootCategory() {
-            return importTestCasesRootCategory;
-        }
-
-        @DataBoundSetter
-        public void setImportTestCasesRootCategory(String importTestCasesRootCategory) {
-            this.importTestCasesRootCategory = importTestCasesRootCategory;
-        }
+        public String importTestCasesRootCategory;
+        /* /pre-ruleset configuration, see readResolve */
 
         @DataBoundConstructor
         public ImportTestCases(String importTestCasesRootCategory) {
@@ -1092,7 +1220,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         @Override
         public String toString() {
             return "ImportTestCases{" +
-                    "importTestCasesRootCategory='" + importTestCasesRootCategory + '\'' +
+                    "importTestCasesRootCategory(pre)='" + importTestCasesRootCategory + '\'' +
                     '}';
         }
     }
@@ -1108,25 +1236,21 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
     public String toString() {
         return "TestlabNotifier{" +
                 "projectKey='" + projectKey + '\'' +
-                ", testRunTitle='" + testRunTitle + '\'' +
-                ", comment='" + comment + '\'' +
-                ", milestone='" + milestone + '\'' +
-                ", testTargetTitle='" + testTargetTitle + '\'' +
-                ", testEnvironmentTitle='" + testEnvironmentTitle + '\'' +
+                ", ruleset='" + ruleset + '\'' +
+                ", rulesetSettings=" + rulesetSettings +
+                ", description='" + description + '\'' +
                 ", tags='" + tags + '\'' +
                 ", parameters='" + parameters + '\'' +
-                ", issuesSettings=" + issuesSettings +
-                ", mergeAsSingleIssue=" + mergeAsSingleIssue +
-                ", assignToUser='" + assignToUser + '\'' +
-                ", reopenExisting=" + reopenExisting +
-                ", advancedSettings=" + advancedSettings +
-                ", companyId='" + companyId + '\'' +
-                ", apiKey='hidden'" +
-                ", testCaseMappingField='" + testCaseMappingField + '\'' +
-                ", usingonpremise=" + usingonpremise +
-                ", publishTap=" + publishTap +
-                ", importTestCases=" + importTestCases +
                 ", publishRobot=" + publishRobot +
-                '}';
+                ", publishTap=" + publishTap +
+                ", advancedSettings=" + advancedSettings +
+                ", testRunTitle(pre)='" + testRunTitle + '\'' +
+                ", milestone(pre)='" + milestone + '\'' +
+                ", testTargetTitle(pre)='" + testTargetTitle + '\'' +
+                ", testEnvironmentTitle(pre)='" + testEnvironmentTitle + '\'' +
+                ", issuesSettings(pre)=" + issuesSettings +
+                ", descriptor=" + getDescriptor() +
+                "}";
     }
+
 }

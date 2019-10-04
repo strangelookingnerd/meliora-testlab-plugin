@@ -66,61 +66,7 @@ public class PipelineTest extends TestBase {
 
         // should fail with errors for all missing required paameters
         j.assertBuildStatus(Result.FAILURE, run);
-        assertContains(log, "Missing required parameter: \"projectKey\"", "Missing required parameter: \"testRunTitle\"");
-    }
-
-    /**
-     * Tests that step fails if mapping id field is missing.
-     */
-    @Test
-    public void testPipelineNoMappingField() throws Exception {
-        WorkflowJob pipelineJob = j.jenkins.createProject(WorkflowJob.class, "test-pipeline");
-        pipelineJob.setConcurrentBuild(false);
-
-        String testProjectPath = new File(
-                getClass().getClassLoader().getResource("pipelinetestproject").toURI()
-        ).getAbsolutePath();
-
-        String script = "" +
-                "pipeline {\n" +
-                "    agent any\n" +
-                "    stages {\n" +
-                "        stage('Copy testproject assets') {\n" +
-                "            steps {\n" +
-                "                sh 'cd \"" + testProjectPath + "\" && cp -r * \"$WORKSPACE\"'\n" +
-                "            }\n" +
-                "        }\n" +
-                "    }\n" +
-                "    post {\n" +
-                "        always {\n" +
-                "            junit '**/surefire-reports/*.xml'\n" +
-                "            melioraTestlab(\n" +
-                "                projectKey: 'TLABDEMO',\n" +
-                "                testRunTitle: 'pipelined integration tests',\n" +
-                "                advancedSettings: [" +
-                "                    companyId: 'testcompany'," +
-                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-//                "                    testCaseMappingField: 'Automated'," +
-                "                    usingonpremise: [" +
-                "                        onpremiseurl: 'http://testcompany:8080/'" +
-                "                    ]" +
-                "                ]" +
-                "            )\n" +
-                "        }\n" +
-                "    }\n" +
-                "}";
-        if(!SANDBOX) {
-            ScriptApproval.get().preapprove(script, GroovyLanguage.get());
-        }
-        pipelineJob.setDefinition(new CpsFlowDefinition(script, SANDBOX));
-
-        WorkflowRun run = pipelineJob.scheduleBuild2(0).get();
-        String log = FileUtils.readFileToString(run.getLogFile());
-
-        l(log);
-
-        j.assertBuildStatus(Result.FAILURE, run);
-        assertContains(log, "ERROR: Could not publish results to Testlab: Test case mapping field is not set.");
+        assertContains(log, "Missing required parameter: \"projectKey\"");
     }
 
     /**
@@ -150,11 +96,12 @@ public class PipelineTest extends TestBase {
                 "            junit '**/surefire-reports/*.xml'\n" +
                 "            melioraTestlab(\n" +
                 "                projectKey: 'TLABDEMO',\n" +
-                "                testRunTitle: 'pipelined integration tests',\n" +
+                "                rulesetSettings: [\n" +
+                "                    testRunTitle: 'pipelined integration tests'\n" +
+                "                ],\n" +
                 "                advancedSettings: [" +
                 "                    companyId: 'testcompany'," +
 //                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-                "                    testCaseMappingField: 'Automated'," +
                 "                    usingonpremise: [" +
                 "                        onpremiseurl: 'http://testcompany:8080/'" +
                 "                    ]" +
@@ -204,11 +151,12 @@ public class PipelineTest extends TestBase {
                 "            junit '**/surefire-reports/*.xml'\n" +
                 "            melioraTestlab(\n" +
                 "                projectKey: 'TLABDEMO',\n" +
-                "                testRunTitle: 'pipelined integration tests',\n" +
+                "                rulesetSettings: [\n" +
+                "                    testRunTitle: 'pipelined integration tests'\n" +
+                "                ],\n" +
                 "                advancedSettings: [" +
 //                "                    companyId: 'testcompany'," +
-                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-                "                    testCaseMappingField: 'Automated'" +
+                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')" +
 //                "                    usingonpremise: [" +
 //                "                        onpremiseurl: 'http://testcompany:8080/'" +
 //                "                    ]" +
@@ -258,11 +206,12 @@ public class PipelineTest extends TestBase {
                 "            junit '**/surefire-reports/*.xml'\n" +
                 "            melioraTestlab(\n" +
                 "                projectKey: 'TLABDEMO',\n" +
-                "                testRunTitle: 'pipelined integration tests',\n" +
+                "                rulesetSettings: [\n" +
+                "                    testRunTitle: 'pipelined integration tests'\n" +
+                "                ],\n" +
                 "                advancedSettings: [" +
 //                "                    companyId: 'testcompany'," +
                 "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-                "                    testCaseMappingField: 'Automated'," +
                 "                    usingonpremise: [" +
                 "                        onpremiseurl: 'http://testcompany:8080/'" +
                 "                    ]" +
@@ -312,11 +261,12 @@ public class PipelineTest extends TestBase {
                 "            junit '**/surefire-reports/*.xml'\n" +
                 "            melioraTestlab(\n" +
                 "                projectKey: 'TLABDEMO',\n" +
-                "                testRunTitle: 'pipelined integration tests',\n" +
+                "                rulesetSettings: [\n" +
+                "                    testRunTitle: 'pipelined integration tests'\n" +
+                "                ],\n" +
                 "                advancedSettings: [" +
                 "                    companyId: 'testcompany'," +
-                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-                "                    testCaseMappingField: 'Automated'" +
+                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')" +
                 "                ]" +
                 "            )\n" +
                 "        }\n" +
@@ -361,23 +311,23 @@ public class PipelineTest extends TestBase {
                 "    post {\n" +
                 "        always {\n" +
                 "            junit '**/surefire-reports/*.xml'\n" +
-                "            melioraTestlab(\n" +
+                "            melioraTestlab(" +
                 "                projectKey: 'TLABDEMO'," +
-                "                testRunTitle: 'pipelined integration tests'," +
-                "                comment: 'Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL}'," +
-                "                milestone: 'C'," +
-                "                testTargetTitle: '1.0'," +
-                "                testEnvironmentTitle: 'jenkins-node'," +
-                "                tags: 'jenkins pipeline'," +
-                "                parameters: 'BROWSER'," +
-                "                issuesSettings: [" +
-                "                    mergeAsSingleIssue: true," +
+                "                ruleset: 'default'," +
+                "                automationSource: 'pipelinetestsource'," +
+                "                rulesetSettings: [" +
+                "                    testRunTitle: 'pipelined integration tests'," +
+                "                    milestone: 'C'," +
+                "                    testTargetTitle: '1.0'," +
+                "                    testEnvironmentTitle: 'jenkins-node'," +
+                "                    addIssueStrategy: 'ADDPERTESTRUN'," +
+                "                    tags: 'jenkins pipeline'," +
                 "                    assignToUser: 'agentsmith'," +
-                "                    reopenExisting: true" +
-                "                ]," +
-                "                importTestCases: [" +
-                "                    importTestCasesRootCategory: 'Import'" +
-                "                ]," +
+                "                    reopenExisting: true," +
+                "                    robotCatenateParentKeywords: true" +
+                "                ],\n" +
+                "                description: 'Jenkins build: ${BUILD_FULL_DISPLAY_NAME} ${BUILD_RESULT}, ${BUILD_URL}'," +
+                "                parameters: 'BROWSER'," +
                 "                publishTap: [" +
                 "                    tapTestsAsSteps: true," +
                 "                    tapFileNameInIdentifier: true," +
@@ -385,13 +335,11 @@ public class PipelineTest extends TestBase {
                 "                    tapMappingPrefix: 'tap'" +
                 "                ]," +
                 "                publishRobot: [" +
-                "                    robotOutput: 'output.xml'," +
-                "                    robotCatenateParentKeywords: true" +
+                "                    robotOutput: 'output.xml'" +
                 "                ]," +
                 "                advancedSettings: [" +
                 "                    companyId: 'testcompany'," +
-                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')," +
-                "                    testCaseMappingField: 'Automated'" +
+                "                    apiKey: hudson.util.Secret.fromString('reallysecretapikey')" +
                 "                ]" +
                 "            )\n" +
                 "        }\n" +

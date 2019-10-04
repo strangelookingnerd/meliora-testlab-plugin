@@ -23,7 +23,7 @@ public class SenderTest extends TestBase {
 
     public static final String TESTPROJECT_INSTALL_SCRIPT =
             "cd {0}\n" +
-            "cp -r * $WORKSPACE";
+            "cp -r * \"$WORKSPACE\"";
 
     /**
      * <ul>
@@ -62,9 +62,9 @@ public class SenderTest extends TestBase {
         TestlabNotifier.AdvancedSettings advancedSettings;
         if(TEST_TESTLABURL != null) {
             TestlabNotifier.Usingonpremise usingonpremise = new TestlabNotifier.Usingonpremise(TEST_TESTLABURL);
-            advancedSettings = new TestlabNotifier.AdvancedSettings(null, Secret.fromString(TEST_APIKEY), "Automated", usingonpremise);
+            advancedSettings = new TestlabNotifier.AdvancedSettings(null, Secret.fromString(TEST_APIKEY), null, usingonpremise);
         } else {
-            advancedSettings = new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, Secret.fromString(TEST_APIKEY), "Automated", null);
+            advancedSettings = new TestlabNotifier.AdvancedSettings(TEST_COMPANYID, Secret.fromString(TEST_APIKEY), null, null);
         }
 
         //// setup a new project and build it
@@ -86,22 +86,23 @@ public class SenderTest extends TestBase {
         // register publish junit tests post build action
         p.getPublishersList().add(new JUnitResultArchiver("**/surefire-reports/*.xml", false, null));
 
+        TestlabNotifier.RulesetSettings rulesetSettings = new TestlabNotifier.RulesetSettings();
+        rulesetSettings.setTestRunTitle("Jenkins plugin unit test run");
+        rulesetSettings.setMilestone("Milestone 3");
+        rulesetSettings.setTestTargetTitle("unit test version");
+        rulesetSettings.setTestEnvironmentTitle("unit test jenkins");
+
         // register our plugin
         p.getPublishersList().add(
                 new TestlabNotifier(
                         "TLABDEMO",
-                        "Jenkins plugin unit test run",
+                        null,
+                        rulesetSettings,
                         "Test run comment",
-                        "Milestone 3",
-                        "unit test version",
-                        "unit test jenkins",
                         "jenkins test",
                         null,
                         null,
-                        advancedSettings,
-                        null,
-                        null,
-                        null
+                        advancedSettings
                 )
         );
 

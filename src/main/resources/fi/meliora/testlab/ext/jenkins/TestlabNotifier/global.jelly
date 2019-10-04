@@ -37,12 +37,6 @@
             <f:password/>
         </f:entry>
 
-        <f:entry title="Test case mapping field"
-                 description="Title of the Testlab custom field to use to map the unit tests to Testlab's test cases"
-                 field="testCaseMappingField">
-            <f:textbox/>
-        </f:entry>
-
         <f:optionalBlock field="cors" title="Allow remote calls from Testlab"
                          checked="${not empty instance.cors}">
             <f:entry

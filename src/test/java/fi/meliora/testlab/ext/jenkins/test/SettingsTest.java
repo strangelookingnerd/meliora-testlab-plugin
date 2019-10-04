@@ -3,7 +3,6 @@ package fi.meliora.testlab.ext.jenkins.test;
 import com.gargoylesoftware.htmlunit.html.*;
 import fi.meliora.testlab.ext.jenkins.TestlabNotifier;
 import hudson.model.FreeStyleProject;
-import hudson.util.Secret;
 import org.junit.Test;
 import org.jvnet.hudson.test.JenkinsRule;
 
@@ -37,7 +36,6 @@ public class SettingsTest extends TestBase {
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
         HtmlCheckBoxInput corsInput = form.getInputByName(FIELD_CORS);
         HtmlTextInput originsInput = form.getInputByName(FIELD_ORIGIN);
 
@@ -45,7 +43,6 @@ public class SettingsTest extends TestBase {
         assertChecked(usingonpremiseInput, false);
         assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
-        assertEmpty(testCaseMappingFieldInput);
         assertChecked(corsInput, false);
         assertHasValue(originsInput, "*");
 
@@ -53,7 +50,6 @@ public class SettingsTest extends TestBase {
         usingonpremiseInput.setChecked(true);
         onpremiseurlInput.setValueAttribute("https://unittesthost:8080");
         apiKeyInput.setValueAttribute("1010101010202020");
-        testCaseMappingFieldInput.setValueAttribute("Some field");
         corsInput.setChecked(true);
         originsInput.setValueAttribute("http://somehost, http://anotherhost");
 
@@ -66,7 +62,6 @@ public class SettingsTest extends TestBase {
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
         corsInput = form.getInputByName(FIELD_CORS);
         originsInput = form.getInputByName(FIELD_ORIGIN);
 
@@ -74,7 +69,6 @@ public class SettingsTest extends TestBase {
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
         assertPassword(apiKeyInput, "1010101010202020");
-        assertHasValue(testCaseMappingFieldInput, "Some field");
         assertChecked(corsInput, true);
         assertHasValue(originsInput, "http://somehost, http://anotherhost");
     }
@@ -101,7 +95,7 @@ public class SettingsTest extends TestBase {
     @Test
     public void testJobSettings() throws Exception {
         FreeStyleProject p = j.createFreeStyleProject("test");
-        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null, null, null, null, null, null));
+        p.getPublishersList().add(new TestlabNotifier(null, null, null, null, null, null, null, null));
 
         JenkinsRule.WebClient client = getWebClient();
         client.login("admin", "admin");
@@ -111,53 +105,58 @@ public class SettingsTest extends TestBase {
         HtmlForm form = configurePage.getFormByName("config");
 
         HtmlTextInput projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
+        HtmlTextInput rulesetInput = form.getInputByName(FIELD_RULESET);
+        HtmlTextInput automationSourceInput = form.getInputByName(FIELD_AUTOMATIONSOURCE);
+
+        HtmlCheckBoxInput rulesetSettingsInput = form.getInputByName(FIELD_BLOCK_RULESETSETTINGS);
         HtmlTextInput testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
         HtmlTextInput milestoneInput = form.getInputByName(FIELD_MILESTONE);
         HtmlTextInput testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         HtmlTextInput testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
-        HtmlCheckBoxInput issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
-        HtmlCheckBoxInput mergeAsSingleIssueInput = form.getInputByName(FIELD_MERGEASSINGLEISSUE);
-        HtmlCheckBoxInput reopenExistingInput = form.getInputByName(FIELD_REOPENEXISTING);
+        HtmlSelect addIssueStrategyInput = form.getSelectByName(FIELD_ADDISSUESTRATEGY);
+        HtmlSelect reopenExistingInput = form.getSelectByName(FIELD_REOPENEXISTING);
         HtmlTextInput assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
+        HtmlSelect robotCatenateParentKeywordsInput = form.getSelectByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
+
         HtmlCheckBoxInput advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        HtmlTextInput testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
-        HtmlTextArea commentInput = form.getTextAreaByName(FIELD_COMMENT);
+
+        HtmlTextArea commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         HtmlTextInput tagsInput = form.getInputByName(FIELD_TAGS);
         HtmlTextInput parametersInput = form.getInputByName(FIELD_PARAMETERS);
+
         HtmlCheckBoxInput publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
         HtmlCheckBoxInput tapTestsAsStepsInput = form.getInputByName(FIELD_TAPTESTSASSTEPS);
         HtmlCheckBoxInput tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
         HtmlCheckBoxInput tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
         HtmlTextInput tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
-        HtmlCheckBoxInput importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
-        HtmlTextInput importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
         HtmlCheckBoxInput publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
         HtmlTextInput robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
-        HtmlCheckBoxInput robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertEmpty(projectkeyInput);
+        assertEmpty(rulesetInput);
+        assertHasValue(automationSourceInput, TestlabNotifier.DEFAULT_AUTOMATIONSOURCE);
+
+        assertChecked(rulesetSettingsInput, false);
         assertEmpty(testRunTitleInput);
         assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
-
-        assertChecked(issuesSettingsInput, false);
-        assertChecked(mergeAsSingleIssueInput, true);       // defaults to true
-        assertChecked(reopenExistingInput, false);
+        assertSingleSelected(addIssueStrategyInput, "null");
+        assertSingleSelected(reopenExistingInput, "null");
         assertEmpty(assignToUserInput);
+        assertSingleSelected(robotCatenateParentKeywordsInput, "null");
 
         assertChecked(advancedSettingsInput, false);
         assertEmpty(companyIdInput);
         assertChecked(usingonpremiseInput, false);
         assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
-        assertEmpty(testCaseMappingFieldInput);
 
-        assertHasValue(commentInput, TestlabNotifier.DEFAULT_COMMENT_TEMPLATE);
+        assertHasValue(commentInput, TestlabNotifier.DEFAULT_DESCRIPTION_TEMPLATE);
         assertEmpty(tagsInput);
 
         assertEmpty(parametersInput);
@@ -167,37 +166,37 @@ public class SettingsTest extends TestBase {
         assertChecked(tapFileNameInIdentifier, true);       // defaults to true
         assertChecked(tapTestNumberInIdentifier, false);
         assertEmpty(tapMappingPrefixInput);
-        assertChecked(importTestCasesInput, false);
-        assertEmpty(importTestCasesRootCategoryInput);
 
         assertChecked(publishRobotInput, false);
         assertHasValue(robotOutputInput, "**/output.xml");
-        assertChecked(robotCatenateParentKeywordsInput, true);
 
         //// set only required fields and assert save
 
         projectkeyInput.setValueAttribute("PROJ");
-        testRunTitleInput.setValueAttribute("Test run");
+        rulesetInput.setValueAttribute("ruleset");
+        automationSourceInput.setValueAttribute("source");
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
         form = configurePage.getFormByName("config");
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
+        automationSourceInput = form.getInputByName(FIELD_AUTOMATIONSOURCE);
+        rulesetInput = form.getInputByName(FIELD_RULESET);
+        rulesetSettingsInput = form.getInputByName(FIELD_BLOCK_RULESETSETTINGS);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
         milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
-        issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
-        mergeAsSingleIssueInput = form.getInputByName(FIELD_MERGEASSINGLEISSUE);
-        reopenExistingInput = form.getInputByName(FIELD_REOPENEXISTING);
+        addIssueStrategyInput = form.getSelectByName(FIELD_ADDISSUESTRATEGY);
+        reopenExistingInput = form.getSelectByName(FIELD_REOPENEXISTING);
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
+        robotCatenateParentKeywordsInput = form.getSelectByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
-        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
         publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
@@ -205,55 +204,46 @@ public class SettingsTest extends TestBase {
         tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
         tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
-        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
-        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
         publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
         robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
-        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
-        assertHasValue(testRunTitleInput, "Test run");
+        assertHasValue(automationSourceInput, "source");
+        assertHasValue(rulesetInput, "ruleset");
+        assertChecked(rulesetSettingsInput, false);
+        assertEmpty(testRunTitleInput);
         assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
-
-        assertChecked(issuesSettingsInput, false);
-        assertChecked(mergeAsSingleIssueInput, true);       // defaults to true
-        assertChecked(reopenExistingInput, false);
+        assertSingleSelected(addIssueStrategyInput, "null");
+        assertSingleSelected(reopenExistingInput, "null");
         assertEmpty(assignToUserInput);
-
+        assertSingleSelected(robotCatenateParentKeywordsInput, "null");
         assertChecked(advancedSettingsInput, false);
         assertEmpty(companyIdInput);
         assertChecked(usingonpremiseInput, false);
         assertEmpty(onpremiseurlInput);
         assertEmpty(apiKeyInput);
-        assertEmpty(testCaseMappingFieldInput);
-
-        assertHasValue(commentInput, TestlabNotifier.DEFAULT_COMMENT_TEMPLATE);
+        assertHasValue(commentInput, TestlabNotifier.DEFAULT_DESCRIPTION_TEMPLATE);
         assertEmpty(tagsInput);
-
         assertEmpty(parametersInput);
-
         assertChecked(publishTapInput, false);
         assertChecked(tapTestsAsStepsInput, false);
         assertChecked(tapFileNameInIdentifier, true);       // defaults to true
         assertChecked(tapTestNumberInIdentifier, false);
         assertEmpty(tapMappingPrefixInput);
-        assertChecked(importTestCasesInput, false);
-        assertEmpty(importTestCasesRootCategoryInput);
-
         assertChecked(publishRobotInput, false);
         assertHasValue(robotOutputInput, "**/output.xml");
-        assertChecked(robotCatenateParentKeywordsInput, true);
 
         //// set other optional fields and issues block and assert save
 
+        rulesetSettingsInput.setChecked(true);
+        testRunTitleInput.setValueAttribute("Test run");
         milestoneInput.setValueAttribute("Milestone 1");
         testTargetTitleInput.setValueAttribute("Some version");
         testEnvironmentTitleInput.setValueAttribute("Some env");
-        issuesSettingsInput.setChecked(true);
-        mergeAsSingleIssueInput.setChecked(false);
-        reopenExistingInput.setChecked(true);
+        addIssueStrategyInput.setSelectedAttribute("ADDPERTESTRUN", true);
+        reopenExistingInput.setSelectedAttribute("true", true);
         assignToUserInput.setValueAttribute("someuser");
         commentInput.setText("comment text");
         tagsInput.setValueAttribute("jenkins tags");
@@ -263,32 +253,36 @@ public class SettingsTest extends TestBase {
         tapFileNameInIdentifier.setChecked(false);
         tapTestNumberInIdentifier.setChecked(true);
         tapMappingPrefixInput.setValueAttribute("PREF");
-        importTestCasesInput.setChecked(true);
-        importTestCasesRootCategoryInput.setValueAttribute("RC");
         publishRobotInput.setChecked(true);
         robotOutputInput.setValueAttribute("results/output2.xml");
-        robotCatenateParentKeywordsInput.setChecked(false);
+        robotCatenateParentKeywordsInput.setSelectedAttribute("false", true);
 
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
+
+        l("AFTER SUBMIT");
+        l(configurePage.asXml());
+
         form = configurePage.getFormByName("config");
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
+        automationSourceInput = form.getInputByName(FIELD_AUTOMATIONSOURCE);
+        rulesetInput = form.getInputByName(FIELD_RULESET);
+        rulesetSettingsInput = form.getInputByName(FIELD_BLOCK_RULESETSETTINGS);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
         milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
-        issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
-        mergeAsSingleIssueInput = form.getInputByName(FIELD_MERGEASSINGLEISSUE);
-        reopenExistingInput = form.getInputByName(FIELD_REOPENEXISTING);
+        addIssueStrategyInput = form.getSelectByName(FIELD_ADDISSUESTRATEGY);
+        reopenExistingInput = form.getSelectByName(FIELD_REOPENEXISTING);
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
+        robotCatenateParentKeywordsInput = form.getSelectByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
-        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
         publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
@@ -296,27 +290,26 @@ public class SettingsTest extends TestBase {
         tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
         tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
-        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
-        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
         publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
         robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
-        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
+        assertHasValue(rulesetInput, "ruleset");
+        assertHasValue(automationSourceInput,"source");
+
+        assertChecked(rulesetSettingsInput, true);
         assertHasValue(testRunTitleInput, "Test run");
         assertHasValue(milestoneInput, "Milestone 1");
         assertHasValue(testTargetTitleInput, "Some version");
         assertHasValue(testEnvironmentTitleInput, "Some env");
 
-        assertChecked(issuesSettingsInput, true);
-        assertChecked(mergeAsSingleIssueInput, false);
-        assertChecked(reopenExistingInput, true);
+        assertSingleSelected(addIssueStrategyInput, "ADDPERTESTRUN");
+        assertSingleSelected(reopenExistingInput, "true");
         assertHasValue(assignToUserInput, "someuser");
 
         assertChecked(advancedSettingsInput, false);
         assertEmpty(companyIdInput);
         assertEmpty(apiKeyInput);
-        assertEmpty(testCaseMappingFieldInput);
 
         assertHasValue(commentInput, "comment text");
         assertHasValue(tagsInput, "jenkins tags");
@@ -328,12 +321,10 @@ public class SettingsTest extends TestBase {
         assertChecked(tapFileNameInIdentifier, false);
         assertChecked(tapTestNumberInIdentifier, true);
         assertHasValue(tapMappingPrefixInput, "PREF");
-        assertChecked(importTestCasesInput, true);
-        assertHasValue(importTestCasesRootCategoryInput, "RC");
 
         assertChecked(publishRobotInput, true);
         assertHasValue(robotOutputInput, "results/output2.xml");
-        assertChecked(robotCatenateParentKeywordsInput, false);
+        assertSingleSelected(robotCatenateParentKeywordsInput, "false");
 
         //// set advanced setting fields and assert save
 
@@ -342,27 +333,28 @@ public class SettingsTest extends TestBase {
         usingonpremiseInput.setChecked(true);
         onpremiseurlInput.setValueAttribute("https://unittesthost:8080");
         apiKeyInput.setValueAttribute("1010101010303030");
-        testCaseMappingFieldInput.setValueAttribute("Other field");
         j.submit(form);
         configurePage = client.goTo("job/test/configure");
         form = configurePage.getFormByName("config");
 
         projectkeyInput = form.getInputByName(FIELD_PROJECTKEY);
+        automationSourceInput = form.getInputByName(FIELD_AUTOMATIONSOURCE);
+        rulesetInput = form.getInputByName(FIELD_RULESET);
+        rulesetSettingsInput = form.getInputByName(FIELD_BLOCK_RULESETSETTINGS);
         testRunTitleInput = form.getInputByName(FIELD_TESTRUNTITLE);
         milestoneInput = form.getInputByName(FIELD_MILESTONE);
         testTargetTitleInput = form.getInputByName(FIELD_TESTTARGETTITLE);
         testEnvironmentTitleInput = form.getInputByName(FIELD_TESTENVIRONMENTTITLE);
-        issuesSettingsInput = form.getInputByName(FIELD_BLOCK_ISSUESSETTINGS);
-        mergeAsSingleIssueInput = form.getInputByName(FIELD_MERGEASSINGLEISSUE);
-        reopenExistingInput = form.getInputByName(FIELD_REOPENEXISTING);
+        addIssueStrategyInput = form.getSelectByName(FIELD_ADDISSUESTRATEGY);
+        reopenExistingInput = form.getSelectByName(FIELD_REOPENEXISTING);
         assignToUserInput = form.getInputByName(FIELD_ASSIGNTOUSER);
+        robotCatenateParentKeywordsInput = form.getSelectByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
         advancedSettingsInput = form.getInputByName(FIELD_BLOCK_ADVANCEDSETTINGS);
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
         apiKeyInput = form.getInputByName(FIELD_APIKEY);
-        testCaseMappingFieldInput = form.getInputByName(FIELD_TESTCASEMAPPINGFIELD);
-        commentInput = form.getTextAreaByName(FIELD_COMMENT);
+        commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
         publishTapInput = form.getInputByName(FIELD_BLOCK_PUBLISHTAP);
@@ -370,21 +362,21 @@ public class SettingsTest extends TestBase {
         tapFileNameInIdentifier = form.getInputByName(FIELD_TAPFILENAMEINIDENTIFIER);
         tapTestNumberInIdentifier = form.getInputByName(FIELD_TAPTESTNUMBERINIDENTIFIER);
         tapMappingPrefixInput = form.getInputByName(FIELD_TAPMAPPINGPREFIX);
-        importTestCasesInput = form.getInputByName(FIELD_BLOCK_IMPORTTESTCASES);
-        importTestCasesRootCategoryInput = form.getInputByName(FIELD_IMPORTTESTCASESROOTCATEGORY);
         publishRobotInput = form.getInputByName(FIELD_BLOCK_PUBLISHROBOT);
         robotOutputInput = form.getInputByName(FIELD_ROBOTOUTPUT);
-        robotCatenateParentKeywordsInput = form.getInputByName(FIELD_ROBOTCATENATEPARENTKEYWORDS);
 
         assertHasValue(projectkeyInput, "PROJ");
+        assertHasValue(rulesetInput, "ruleset");
+        assertHasValue(automationSourceInput, "source");
+
+        assertChecked(rulesetSettingsInput, true);
         assertHasValue(testRunTitleInput, "Test run");
         assertHasValue(milestoneInput, "Milestone 1");
         assertHasValue(testTargetTitleInput, "Some version");
         assertHasValue(testEnvironmentTitleInput, "Some env");
 
-        assertChecked(issuesSettingsInput, true);
-        assertChecked(mergeAsSingleIssueInput, false);
-        assertChecked(reopenExistingInput, true);
+        assertSingleSelected(addIssueStrategyInput, "ADDPERTESTRUN");
+        assertSingleSelected(reopenExistingInput, "true");
         assertHasValue(assignToUserInput, "someuser");
 
         assertHasValue(commentInput, "comment text");
@@ -392,24 +384,21 @@ public class SettingsTest extends TestBase {
 
         assertHasValue(parametersInput, "var1, var2");
 
-        assertChecked(advancedSettingsInput, true);
-        assertHasValue(companyIdInput, "unittestcompanyjob");
-        assertChecked(usingonpremiseInput, true);
-        assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertPassword(apiKeyInput, "1010101010303030");
-        assertHasValue(testCaseMappingFieldInput, "Other field");
-
         assertChecked(publishTapInput, true);
         assertChecked(tapTestsAsStepsInput, true);
         assertChecked(tapFileNameInIdentifier, false);
         assertChecked(tapTestNumberInIdentifier, true);
         assertHasValue(tapMappingPrefixInput, "PREF");
-        assertChecked(importTestCasesInput, true);
-        assertHasValue(importTestCasesRootCategoryInput, "RC");
 
         assertChecked(publishRobotInput, true);
         assertHasValue(robotOutputInput, "results/output2.xml");
-        assertChecked(robotCatenateParentKeywordsInput, false);
+        assertSingleSelected(robotCatenateParentKeywordsInput, "false");
+
+        assertChecked(advancedSettingsInput, true);
+        assertHasValue(companyIdInput, "unittestcompanyjob");
+        assertChecked(usingonpremiseInput, true);
+        assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
+        assertPassword(apiKeyInput, "1010101010303030");
     }
 
 }

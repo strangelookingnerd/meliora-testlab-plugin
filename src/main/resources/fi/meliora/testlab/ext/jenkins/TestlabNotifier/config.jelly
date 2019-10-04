@@ -1,8 +1,5 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-    <!--
-      This jelly script is used for per-project configuration.
-    -->
     <f:entry
             title="Project key"
             description="Project key of the Testlab project for which to publish to"
@@ -11,46 +8,119 @@
     </f:entry>
 
     <f:entry
-            title="Test run title"
-            description="Name of the Testlab test run to create or update."
-            field="testRunTitle">
-        <f:textbox clazz="required" />
+            title="Ruleset"
+            description="Name of the ruleset to use for pushing the results. If not set, uses the default ruleset of the project"
+            field="ruleset">
+        <f:textbox />
     </f:entry>
 
     <f:entry
-            title="Test run comment"
-            description="Comment of the Testlab test run."
-            field="comment">
+            title="Source"
+            description="Source's name. Source is used to group and identify results used when creating Testlab test runs"
+            field="automationSource">
+        <f:textbox default="${descriptor.getDefaultAutomationSource()}"/>
+    </f:entry>
+
+    <f:optionalBlock field="rulesetSettings" title="Override ruleset settings"
+                     checked="${not empty instance.rulesetSettings}"
+                     help="/plugin/meliora-testlab/help-source.html">
+        <j:set var="instance" value="${instance.rulesetSettings}"/>
+
+        <f:block>
+            <div>
+                <p>
+                    The earlier version of Meliora Testlab had the following options to control if the test cases
+                    for the automated tests are created: <b>"Automatically create test cases", "Import category" and "Test case mapping field"</b>.
+                    These values are now obsolete and replaced with appropriate rules bound to rulesets at Testlab side.
+                    If these values were previously used, in your Testlab project, you should add an "Add and map"
+                    typed rule to your ruleset that creates the test cases to the test category you'd prefer.
+                    <i>You can read more about rulesets, ruleset rules and how to migrate to new automation features of Testlab in the plugin documentation.</i>
+                </p>
+                <p>
+                    In your previous plugin configuration, you had the following values for these now deprecated
+                    options:
+                </p>
+                <ul>
+                    <li><b>Automatically create test cases: ${instance.importTestCases}</b></li>
+                    <li><b>Import category: ${instance.importTestCasesRootCategory}</b></li>
+                    <li><b>Test case mapping field: ${instance.testCaseMappingField}</b></li>
+                </ul>
+                <p>
+                    <i>(If values are blank, the values were not set)</i>
+                </p>
+            </div>
+        </f:block>
+
+        <f:entry
+                title="Ruleset: Title of test run"
+                description="Name of the Testlab test run to create or update."
+                field="testRunTitle">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Milestone"
+                description="Milestone in Testlab the results and issues are bound to."
+                field="milestone">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Version"
+                description="Version in Testlab the results and issues are bound to."
+                field="testTargetTitle">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Environment"
+                description="Environment in Testlab the results and issues are bound to."
+                field="testEnvironmentTitle">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Add issues for failures?"
+                description="When to add issues for failed tests."
+                field="addIssueStrategy">
+            <f:select/>
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Reopen existing issues?"
+                description="If set the plugin tries to reopen matching issues found in the project."
+                field="reopenExisting">
+            <f:select/>
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Assign issues to this user"
+                description="If set the added issues are automatically assigned to this user in the set project. Set value as an user ID of the preferred user."
+                field="assignToUser">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Test run tags"
+                description="Tags to be set for the Testlab test run. Separate multiple tags with comma."
+                field="tags">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry
+                title="Ruleset: Robot Framework: Concatenate parent keywords in steps ?"
+                description="If set, all keywords and their sub keywords are catenated to a single step in the result when possible."
+                field="robotCatenateParentKeywords">
+            <f:select/>
+        </f:entry>
+    </f:optionalBlock>
+
+    <f:entry
+            title="Test run description"
+            description="Descripion for the test run created or updated in Testlab."
+            field="description">
         <f:textarea clazz="required"
-                    default="${descriptor.getDefaultCommentTemplate()}"/>
-    </f:entry>
-
-    <f:entry
-            title="Milestone (Optional)"
-            description="Milestone in Testlab the results and issues are bound to."
-            field="milestone">
-        <f:textbox />
-    </f:entry>
-
-    <f:entry
-            title="Version (Optional)"
-            description="Version in Testlab the results and issues are bound to."
-            field="testTargetTitle">
-        <f:textbox />
-    </f:entry>
-
-    <f:entry
-            title="Environment (Optional)"
-            description="Environment in Testlab the results and issues are bound to."
-            field="testEnvironmentTitle">
-        <f:textbox />
-    </f:entry>
-
-    <f:entry
-            title="Tags (Optional)"
-            description="Tags to be set for the Testlab test run. Separate multiple tags with spaces."
-            field="tags">
-        <f:textbox />
+                    default="${descriptor.getDefaultDescriptionTemplate()}"/>
     </f:entry>
 
     <f:entry
@@ -60,45 +130,9 @@
         <f:textbox />
     </f:entry>
 
-    <f:optionalBlock field="issuesSettings" title="Add issues?"
-                     checked="${not empty instance.issuesSettings}"
-                     help="/plugin/meliora-testlab/help-addIssues.html">
-
-        <f:entry
-                title="Add issues as a single merged issue?"
-                description="If checked added issues are merged to a single issue per job run."
-                field="mergeAsSingleIssue">
-            <f:checkbox checked="${h.defaultToTrue(instance.issuesSettings.mergeAsSingleIssue)}"/>
-        </f:entry>
-
-        <f:entry
-                title="Reopen existing issues?"
-                description="If set the plugin tries to reopen matching issues found in the project."
-                field="reopenExisting">
-            <f:checkbox />
-        </f:entry>
-
-        <f:entry
-                title="Assign to user"
-                description="If set the added issues are automatically assigned to this user in the set project."
-                field="assignToUser">
-            <f:textbox />
-        </f:entry>
-
-    </f:optionalBlock>
-
-    <f:optionalBlock field="importTestCases" title="Automatically create test cases"
-                     checked="${not empty instance.importTestCases}">
-        <f:entry
-                title="Import category"
-                description="Test category where the automatically created test cases will be created to. Defaults to 'Import'."
-                field="importTestCasesRootCategory">
-            <f:textbox />
-        </f:entry>
-    </f:optionalBlock>
-
     <f:optionalBlock field="publishRobot" title="Publish Robot Framework results"
                      checked="${not empty instance.publishRobot}">
+        <j:set var="instance" value="${instance.publishRobot}"/>
         <f:entry
                 title="Robot output xml file"
                 description="Path to the Robot Framework's output xml file (relative to build workspace)."
@@ -106,16 +140,11 @@
             <f:textbox default="**/output.xml" />
         </f:entry>
 
-        <f:entry
-                title="Catenate parent keywords in steps ?"
-                description="If set, all keywords and their sub keywords are catenated to a single step in the result when possible."
-                field="robotCatenateParentKeywords">
-            <f:checkbox checked="${h.defaultToTrue(instance.publishRobot.robotCatenateParentKeywords)}" />
-        </f:entry>
     </f:optionalBlock>
 
     <f:optionalBlock field="publishTap" title="Publish TAP results"
                      checked="${not empty instance.publishTap}">
+        <j:set var="instance" value="${instance.publishTap}"/>
         <f:entry
                 title="Publish TAP tests as test case steps ?"
                 description="If set, each TAP file will be mapped to a single test case in Testlab and the steps of the test case will be overwritten and matched to sent lines in TAP file. By default (when not set), each test in TAP file will be mapped to a separate test case in Testlab."
@@ -127,7 +156,7 @@
                 title="Include TAP file name in mapping identifier ?"
                 description="If set, the name of the TAP file containing the tests is included in the mapping identifier as a prefix. Please note, that all dots in the name of the file are replaced with underscores."
                 field="tapFileNameInIdentifier">
-            <f:checkbox checked="${h.defaultToTrue(instance.publishTap.tapFileNameInIdentifier)}" />
+            <f:checkbox checked="${h.defaultToTrue(instance.tapFileNameInIdentifier)}" />
         </f:entry>
 
         <f:entry
@@ -147,6 +176,7 @@
 
     <f:optionalBlock field="advancedSettings" title="Advanced settings"
                      checked="${not empty instance.advancedSettings}">
+        <j:set var="instance" value="${instance.advancedSettings}"/>
 
         <f:entry title="Company ID"
                  description="Company identifier of hosted Testlab. Overrides default setting set in Manage Jenkins > Configure System."
@@ -155,7 +185,8 @@
         </f:entry>
 
         <f:optionalBlock field="usingonpremise" title="I'm using Testlab On-premise"
-                         checked="${not empty instance.advancedSettings.usingonpremise}">
+                         checked="${not empty instance.usingonpremise}">
+            <j:set var="instance" value="${instance.usingonpremise}"/>
             <f:entry
                     title="Testlab URL"
                     description="Full URL (scheme, host name &amp; domain + optionally port) of your Testlab on-premise server, for example 'https://testlab.mycompany.com'. Overrides default setting set in Manage Jenkins > Configure System."
@@ -168,12 +199,6 @@
                  description="Testlab API key to use for security. Overrides default setting set in Manage Jenkins > Configure System."
                  field="apiKey">
             <f:password clazz="required" />
-        </f:entry>
-
-        <f:entry title="Test case mapping field"
-                 description="Title of the Testlab custom field to use to map the unit tests to Testlab's test cases. Overrides default setting set in Manage Jenkins > Configure System."
-                 field="testCaseMappingField">
-            <f:textbox clazz="required" />
         </f:entry>
 
     </f:optionalBlock>

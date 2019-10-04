@@ -18,15 +18,20 @@ import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
 import jenkins.MasterToSlaveFileCallable;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
 
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,23 +63,57 @@ public class Sender {
 
     /**
      * Does the actual sending of results to Testlab. Called from appropriate Jenkins extension point.
+     * @param tapTestsAsSteps,
+     * @param tapFileNameInIdentifier,
+     * @param workspace
+     * @param companyId
+     * @param usingonpremise
+     * @param onpremiseurl
+     * @param apiKey
+     * @param projectKey
+     * @param ruleset
+     * @param milestone
+     * @param testRunTitle
+     * @param description
+     * @param testTargetTitle
+     * @param testEnvironmentTitle
+     * @param tags
+     * @param parameters
+     * @param addIssueStrategy
+     * @param reopenExisting
+     * @param assignToUser
+     * @param publishTap
+     * @param tapTestNumberInIdentifier
+     * @param publishRobot
+     * @param robotOutput
+     * @param robotCatenateParentKeywords
+     * @param automationSource
+     * @param resultName
+     * @param build
      */
-    public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String milestone,
-                                   String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
-                                   Map<String, String> parameters, boolean addIssues, boolean mergeAsSingleIssue, boolean reopenExisting, String assignToUser,
+    public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String ruleset, String milestone,
+                                   String testRunTitle, String description, String testTargetTitle, String testEnvironmentTitle, String tags,
+                                   Map<String, String> parameters, fi.meliora.testlab.ext.rest.model.TestResult.AddIssueStrategy addIssueStrategy, Boolean reopenExisting, String assignToUser,
                                    boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
-                                   boolean importTestCases, String importTestCasesRootCategory,
-                                   String testCaseMappingField, boolean publishRobot, String robotOutput, boolean robotCatenateParentKeywords,
-                                   Run<?, ?> build) {
+                                   boolean publishRobot, String robotOutput, Boolean robotCatenateParentKeywords,
+                                   String automationSource, String resultName, Run<?, ?> build) {
+
+//    public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String ruleset, String milestone,
+//                                   String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
+//                                   Map<String, String> parameters, Boolean addIssues, Boolean mergeAsSingleIssue, Boolean reopenExisting, String assignToUser,
+//                                   boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
+//                                   Boolean importTestCases, String importTestCasesRootCategory,
+//                                   String testCaseMappingField, boolean publishRobot, String robotOutput, Boolean robotCatenateParentKeywords,
+//                                   Run<?, ?> build) {
+
         // no need to validate params here, extension ensures we have some values set
 
         if(log.isLoggable(Level.FINE))
-            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + milestone
-                    + ", " + testRunTitle + ", " + comment + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", [" + parameters + "], "
-                    + addIssues + ", " + mergeAsSingleIssue + ", " + reopenExisting + ", " + assignToUser
+            log.fine("Running Sender - " + companyId + ", " + usingonpremise + ", " + onpremiseurl + ", api key hidden, " + projectKey + ", " + ruleset + ", " + milestone
+                    + ", " + testRunTitle + ", " + description + ", " + testTargetTitle + ", " + testEnvironmentTitle + ", " + tags + ", [" + parameters + "], "
+                    + addIssueStrategy + ", " + reopenExisting + ", " + assignToUser
                     + ", " + publishTap + ", " + tapTestsAsSteps + ", " + tapFileNameInIdentifier + ", " + tapTestNumberInIdentifier + ", " + tapMappingPrefix
-                    + ", " + importTestCases + ", " + importTestCasesRootCategory
-                    + ", " + testCaseMappingField + ", " + publishRobot + ", " + robotOutput + ", " + robotCatenateParentKeywords
+                    + ", " + publishRobot + ", " + robotOutput + ", " + robotCatenateParentKeywords + ", " + automationSource
             );
 
         if(log.isLoggable(Level.FINE))
@@ -114,21 +153,24 @@ public class Sender {
             String user = "Jenkins job: " + build.getParent().getDisplayName();
 
             fi.meliora.testlab.ext.rest.model.TestResult data = new fi.meliora.testlab.ext.rest.model.TestResult();
-            data.setStatus(fi.meliora.testlab.ext.rest.model.TestResult.STATUS_FINISHED);
             data.setProjectKey(projectKey);
+            data.setRuleset(ruleset);
+            data.setAutomationSourceTitle(automationSource);
             data.setTestRunTitle(testRunTitle);
             // note: we send the set milestone in both fields as backend logic tries first with identifier and fallbacks to title
             data.setMilestoneIdentifier(milestone);
             data.setMilestoneTitle(milestone);
-            data.setAddIssues(addIssues);
-            data.setMergeAsSingleIssue(mergeAsSingleIssue);
+            data.setAddIssueStrategy(addIssueStrategy);
             data.setReopenExistingIssues(reopenExisting);
             data.setAssignIssuesToUser(assignToUser);
-            data.setTestCaseMappingField(testCaseMappingField);
             data.setUser(user);
-            data.setComment(comment);
-            data.setImportTestCases(importTestCases);
-            data.setImportTestCasesRootCategory(importTestCasesRootCategory);
+            data.setDescription(description);
+            data.setResultName(resultName);
+
+//            data.setTestCaseMappingField(testCaseMappingField);
+//            data.setImportTestCases(importTestCases);
+//            data.setImportTestCasesRootCategory(importTestCasesRootCategory);
+
             if(parameters != null && parameters.size() > 0) {
                 List<KeyValuePair> parameterValues = new ArrayList<KeyValuePair>();
                 for(String name : parameters.keySet()) {
@@ -478,8 +520,38 @@ public class Sender {
                     throw new AbortException("Robot Output path " + robotOutput + " matches more than one file. Pattern must be more exact. Aborting.");
                 }
                 File outputXml = new File(ds.getBasedir(), files[0]);
-                return Util.loadFile(outputXml, Charset.forName("UTF-8"));
+                FileReader r = null;
+                try {
+                    r = new FileReader(outputXml);
+                    byte[] bytes = IOUtils.toByteArray(r);
+                    String encoding = detectXmlEncoding(bytes);
+                    if(encoding == null)
+                        encoding = "UTF-8";
+                    return new String(bytes, encoding);
+                } finally {
+                    if(r != null)
+                        try { r.close(); } catch (Exception e) {}
+                }
             }
+            return null;
+        }
+    }
+
+    /**
+     * From XML file encoded as bytes, try to detect the XML encoding from the preamble.
+     *
+     * @param xml
+     * @return
+     */
+    public static String detectXmlEncoding(byte[] xml) {
+        try {
+            if(xml == null)
+                return null;
+            XMLStreamReader r = XMLInputFactory.newInstance().createXMLStreamReader(new ByteArrayInputStream(xml));
+            String encoding = r.getEncoding();
+            r.close();
+            return encoding;
+        } catch (XMLStreamException xe) {
             return null;
         }
     }

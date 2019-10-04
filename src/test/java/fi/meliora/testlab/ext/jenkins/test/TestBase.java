@@ -3,9 +3,7 @@ package fi.meliora.testlab.ext.jenkins.test;
 import com.gargoylesoftware.css.parser.CSSErrorHandler;
 import com.gargoylesoftware.css.parser.CSSException;
 import com.gargoylesoftware.css.parser.CSSParseException;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
-import com.gargoylesoftware.htmlunit.html.HtmlPasswordInput;
-import com.gargoylesoftware.htmlunit.html.HtmlTextArea;
+import com.gargoylesoftware.htmlunit.html.*;
 import hudson.util.Secret;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Before;
@@ -13,8 +11,9 @@ import org.junit.Rule;
 import org.jvnet.hudson.test.JenkinsRule;
 
 import java.io.IOException;
+import java.util.List;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Base class for all unit tests.
@@ -26,22 +25,31 @@ public class TestBase {
     public JenkinsRule j = new JenkinsRule();
 
     public static final String FIELD_PROJECTKEY = "_.projectKey";
+    public static final String FIELD_RULESET = "_.ruleset";
+
+    //    public static final String FIELD_BLOCK_ISSUESSETTINGS = "_.issuesSettings";
+    //    public static final String FIELD_BLOCK_IMPORTTESTCASES = "_.importTestCases";
+
+    public static final String FIELD_BLOCK_RULESETSETTINGS = "_.rulesetSettings";
     public static final String FIELD_TESTRUNTITLE = "_.testRunTitle";
     public static final String FIELD_MILESTONE = "_.milestone";
     public static final String FIELD_TESTTARGETTITLE = "_.testTargetTitle";
     public static final String FIELD_TESTENVIRONMENTTITLE = "_.testEnvironmentTitle";
-
-    public static final String FIELD_BLOCK_ISSUESSETTINGS = "_.issuesSettings";
+    public static final String FIELD_ADDISSUESTRATEGY = "_.addIssueStrategy";
     public static final String FIELD_REOPENEXISTING = "_.reopenExisting";
-    public static final String FIELD_MERGEASSINGLEISSUE = "_.mergeAsSingleIssue";
+//    public static final String FIELD_MERGEASSINGLEISSUE = "_.mergeAsSingleIssue";
     public static final String FIELD_ASSIGNTOUSER = "_.assignToUser";
+//    public static final String FIELD_TESTCASEMAPPINGFIELD = "_.testCaseMappingField";
+//    public static final String FIELD_IMPORTTESTCASES = "_.importTestCases";
+//    public static final String FIELD_IMPORTTESTCASESROOTCATEGORY = "_.importTestCasesRootCategory";
+    public static final String FIELD_ROBOTCATENATEPARENTKEYWORDS = "_.robotCatenateParentKeywords";
+    public static final String FIELD_AUTOMATIONSOURCE = "_.automationSource";
 
     public static final String FIELD_BLOCK_ADVANCEDSETTINGS = "_.advancedSettings";
     public static final String FIELD_COMPANYID = "_.companyId";
     public static final String FIELD_USINGONPREMISE = "_.usingonpremise";
     public static final String FIELD_ONPREMISEURL = "_.onpremiseurl";
     public static final String FIELD_APIKEY = "_.apiKey";
-    public static final String FIELD_TESTCASEMAPPINGFIELD = "_.testCaseMappingField";
 
     public static final String FIELD_BLOCK_PUBLISHTAP = "_.publishTap";
     public static final String FIELD_TAPTESTSASSTEPS = "_.tapTestsAsSteps";
@@ -49,17 +57,13 @@ public class TestBase {
     public static final String FIELD_TAPTESTNUMBERINIDENTIFIER = "_.tapTestNumberInIdentifier";
     public static final String FIELD_TAPMAPPINGPREFIX = "_.tapMappingPrefix";
 
-    public static final String FIELD_BLOCK_IMPORTTESTCASES = "_.importTestCases";
-    public static final String FIELD_IMPORTTESTCASESROOTCATEGORY = "_.importTestCasesRootCategory";
-
     public static final String FIELD_BLOCK_PUBLISHROBOT = "_.publishRobot";
     public static final String FIELD_ROBOTOUTPUT = "_.robotOutput";
-    public static final String FIELD_ROBOTCATENATEPARENTKEYWORDS = "_.robotCatenateParentKeywords";
 
     public static final String FIELD_CORS = "_.cors";
     public static final String FIELD_ORIGIN = "_.origin";
 
-    public static final String FIELD_COMMENT = "_.comment";
+    public static final String FIELD_DESCRIPTION = "_.description";
     public static final String FIELD_TAGS = "_.tags";
 
     public static final String FIELD_PARAMETERS = "_.parameters";
@@ -115,6 +119,20 @@ public class TestBase {
         if(secret != null)
             decrypted = secret.getPlainText();
         assertTrue(input.getNameAttribute() + " password was not " + plainText + ": was " + decrypted, plainText.equals(decrypted));
+    }
+
+    /**
+     * Asserts that select has an option selected.
+     *
+     * @param input select
+     * @param option value
+     */
+    protected void assertSingleSelected(HtmlSelect input, String option) {
+        List<HtmlOption> options = input.getSelectedOptions();
+        assertEquals(input.getNameAttribute() + " select has multiple selections: " + options, 1, options.size());
+        String selected = options.get(0).getValueAttribute();
+        l(options.get(0).toString());
+        assertEquals(input.getNameAttribute() + " select is not " + option, option, selected);
     }
 
     /**
