@@ -1,11 +1,14 @@
 package fi.meliora.testlab.ext.jenkins;
 
+import fi.meliora.testlab.ext.rest.model.Changeset;
 import hudson.*;
 import hudson.model.*;
+import hudson.scm.ChangeLogSet;
 import hudson.tasks.*;
 import hudson.util.ListBoxModel;
 import hudson.util.PluginServletFilter;
 import hudson.util.Secret;
+import jenkins.scm.RunWithSCM;
 import jenkins.tasks.SimpleBuildStep;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.StringUtils;
@@ -538,6 +541,59 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             throw new AbortException(abortError);
         }
 
+        // provide SCM information, if any
+        List<String> culprits = null;
+        List<Changeset> changesets = null;
+        if(build instanceof RunWithSCM) {
+            RunWithSCM<?, ?> runWithSCM = (RunWithSCM<?, ?>)build;
+            List<ChangeLogSet<? extends ChangeLogSet.Entry>> jenkinsChangeSets = runWithSCM.getChangeSets();
+
+            if(runWithSCM.shouldCalculateCulprits())
+                runWithSCM.calculateCulprits();
+            Set<String> culpritIds = runWithSCM.getCulpritIds();
+            if(culpritIds != null)
+                culprits = new ArrayList(culpritIds);
+
+            log.fine("RunWithSCM, culprits: " + culpritIds + ", changesets: " + jenkinsChangeSets);
+
+            if(jenkinsChangeSets.size() > 0) {
+                for(ChangeLogSet<? extends ChangeLogSet.Entry> cls : jenkinsChangeSets) {
+                    log.fine("Changeset: " + cls + ", Kind: " + cls.getKind());
+                    if(cls.getItems() != null) {
+                        if("git".equals(cls.getKind())) {
+                            hudson.plugins.git.GitChangeSetList gcsl = (hudson.plugins.git.GitChangeSetList)cls;
+                            List<hudson.plugins.git.GitChangeSet> sets = gcsl.getLogs();
+                            if(sets != null) {
+                                for(hudson.plugins.git.GitChangeSet set : sets) {
+                                    String commitId = set.getCommitId();
+                                    if(changesets == null)
+                                        changesets = new ArrayList<Changeset>();
+                                    Changeset cs = new Changeset();
+                                    cs.setIdentifier(commitId);
+                                    cs.setType(Changeset.TYPE_GIT);
+                                    changesets.add(cs);
+                                }
+                            }
+                        } else if("hg".equals(cls.getKind()) || "mercurial".equals(cls.getKind())) {
+                            hudson.plugins.mercurial.MercurialChangeSetList mcsl = (hudson.plugins.mercurial.MercurialChangeSetList)cls;
+                            List<hudson.plugins.mercurial.MercurialChangeSet> sets = mcsl.getLogs();
+                            if(sets != null) {
+                                for(hudson.plugins.mercurial.MercurialChangeSet set : sets) {
+                                    String commitId = set.getCommitId();
+                                    if(changesets == null)
+                                        changesets = new ArrayList<Changeset>();
+                                    Changeset cs = new Changeset();
+                                    cs.setIdentifier(commitId);
+                                    cs.setType(Changeset.TYPE_HG);
+                                    changesets.add(cs);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            log.fine("RunWithSCM, sending changesets: " + changesets);
+        }
 
         Sender.sendResults(
                 workspace,
@@ -567,6 +623,8 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
                 rulesetSettings != null ? rulesetSettings.robotCatenateParentKeywords : null,
                 runAutomationSource,
                 resultName,
+                culprits,
+                changesets,
                 build);
 
         return true;

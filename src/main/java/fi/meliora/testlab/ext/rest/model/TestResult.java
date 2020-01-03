@@ -116,6 +116,20 @@ public class TestResult extends ModelObject {
     @XmlElement
     private String resultName;
 
+    /**
+     * Culprits for the possible failure, if any.
+     */
+    @XmlElement
+    private List<String> culprits;
+
+    /**
+     * Changesets the test result relates to. For Testlab to react to these values, the
+     * VCS integration to be set up for the project for the Changeset to exist in the Testlab's
+     * database. If corresponding Changeset does not exist in Testlab, these values are ignored.
+     */
+    @XmlElement(type = Changeset.class)
+    private List<Changeset> changesets;
+
     public Long getProjectId() {
         return projectId;
     }
@@ -150,7 +164,7 @@ public class TestResult extends ModelObject {
      * Name of the ruleset to apply to these results. Test result rulesets are configured in the
      * "Test automation" UI in Testlab. If not set, a default ruleset for the project is used.
      *
-     * @param ruleset
+     * @param ruleset name of the ruleset
      */
     public void setRuleset(String ruleset) {
         this.ruleset = ruleset;
@@ -496,5 +510,43 @@ public class TestResult extends ModelObject {
     }
 
     public String getResultName() { return resultName; }
+
+    /**
+     * Optional. If set, this will be used as a name for the results (file) added to Testlab.
+     * For example, this can be set as an URL (for example Jenkins job URL) or the name of the
+     * result file you are pushing the results from.
+     *
+     * @param resultName result name
+     */
     public void setResultName(String resultName) { this.resultName = resultName; }
+
+    public List<String> getCulprits() {
+        return culprits;
+    }
+
+    /**
+     * Culprits for the possible failure, if any.
+     *
+     * @param culprits culprits
+     */
+    public void setCulprits(List<String> culprits) {
+        this.culprits = culprits;
+    }
+
+    public List<Changeset> getChangesets() {
+        return changesets;
+    }
+
+    /**
+     * Changesets the test result relates to.
+     *
+     * For Testlab to react to these values, the
+     * VCS integration to be set up for the project for the Changeset to exist in the Testlab's
+     * database. If corresponding Changeset does not exist in Testlab, these values are ignored.
+     *
+     * @param changesets changesets
+     */
+    public void setChangesets(List<Changeset> changesets) {
+        this.changesets = changesets;
+    }
 }

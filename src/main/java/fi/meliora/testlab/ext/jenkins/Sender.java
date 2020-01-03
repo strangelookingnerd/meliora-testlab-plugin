@@ -2,10 +2,7 @@ package fi.meliora.testlab.ext.jenkins;
 
 import fi.meliora.testlab.ext.crest.CrestEndpointFactory;
 import fi.meliora.testlab.ext.crest.TestResultResource;
-import fi.meliora.testlab.ext.rest.model.AddTestResultResponse;
-import fi.meliora.testlab.ext.rest.model.KeyValuePair;
-import fi.meliora.testlab.ext.rest.model.TestCaseResult;
-import fi.meliora.testlab.ext.rest.model.TestCaseResultStep;
+import fi.meliora.testlab.ext.rest.model.*;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Util;
@@ -89,6 +86,8 @@ public class Sender {
      * @param robotCatenateParentKeywords
      * @param automationSource
      * @param resultName
+     * @param culprits
+     * @param changesets
      * @param build
      */
     public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String ruleset, String milestone,
@@ -96,15 +95,7 @@ public class Sender {
                                    Map<String, String> parameters, fi.meliora.testlab.ext.rest.model.TestResult.AddIssueStrategy addIssueStrategy, Boolean reopenExisting, String assignToUser,
                                    boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
                                    boolean publishRobot, String robotOutput, Boolean robotCatenateParentKeywords,
-                                   String automationSource, String resultName, Run<?, ?> build) {
-
-//    public static void sendResults(final FilePath workspace, String companyId, boolean usingonpremise, String onpremiseurl, String apiKey, String projectKey, String ruleset, String milestone,
-//                                   String testRunTitle, String comment, String testTargetTitle, String testEnvironmentTitle, String tags,
-//                                   Map<String, String> parameters, Boolean addIssues, Boolean mergeAsSingleIssue, Boolean reopenExisting, String assignToUser,
-//                                   boolean publishTap, boolean tapTestsAsSteps, boolean tapFileNameInIdentifier, boolean tapTestNumberInIdentifier, String tapMappingPrefix,
-//                                   Boolean importTestCases, String importTestCasesRootCategory,
-//                                   String testCaseMappingField, boolean publishRobot, String robotOutput, Boolean robotCatenateParentKeywords,
-//                                   Run<?, ?> build) {
+                                   String automationSource, String resultName, List<String> culprits, List<Changeset> changesets, Run<?, ?> build) {
 
         // no need to validate params here, extension ensures we have some values set
 
@@ -166,10 +157,8 @@ public class Sender {
             data.setUser(user);
             data.setDescription(description);
             data.setResultName(resultName);
-
-//            data.setTestCaseMappingField(testCaseMappingField);
-//            data.setImportTestCases(importTestCases);
-//            data.setImportTestCasesRootCategory(importTestCasesRootCategory);
+            data.setCulprits(culprits);
+            data.setChangesets(changesets);
 
             if(parameters != null && parameters.size() > 0) {
                 List<KeyValuePair> parameterValues = new ArrayList<KeyValuePair>();
