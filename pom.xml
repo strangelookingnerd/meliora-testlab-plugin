@@ -40,7 +40,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <jenkins.version>2.130</jenkins.version>
+        <jenkins.version>2.138.4</jenkins.version>
         <jenkins-test-harness.version>2.49</jenkins-test-harness.version>
         <java.level>8</java.level>
     </properties>
@@ -91,12 +91,24 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>junit</artifactId>
-            <version>1.15</version>
+            <version>1.20</version>
         </dependency>
         <dependency>
             <groupId>org.tap4j</groupId>
             <artifactId>tap</artifactId>
-            <version>1.23</version>
+            <version>2.2.1</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>git</artifactId>
+            <version>4.0.0</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>mercurial</artifactId>
+            <version>2.3</version>
             <optional>true</optional>
         </dependency>
         <dependency>
@@ -108,14 +120,26 @@
         <!-- Require upper bound dependencies error for ... -->
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>matrix-project</artifactId>
+            <version>1.14</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>structs</artifactId>
+            <version>1.20</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.46</version>
+            <version>1.54</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mailer</artifactId>
-            <version>1.20</version>
+            <version>1.23</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -125,9 +149,15 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>jsch</artifactId>
+            <version>0.1.55.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>org.jenkins-ci</groupId>
             <artifactId>symbol-annotation</artifactId>
-            <version>1.15</version>
+            <version>1.20</version>
             <!--            <scope>test</scope>-->
         </dependency>
         <!-- /Require upper bound dependencies error for ... -->
