@@ -10,7 +10,7 @@
     <version>1.19-SNAPSHOT</version>
     <packaging>hpi</packaging>
     <description>Publishes results of automated tests to Meliora Testlab</description>
-    <url>http://wiki.jenkins-ci.org/display/JENKINS/Meliora+Testlab+Plugin</url>
+    <url>https://github.com/jenkinsci/meliora-testlab-plugin/blob/master/README.md</url>
 
     <licenses>
         <license>
