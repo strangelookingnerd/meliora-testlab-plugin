@@ -1,6 +1,8 @@
 A Jenkins CI plugin to publish results of automated tests to [Meliora
 Testlab](https://www.melioratestlab.com).
 
+[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/meliora-testlab.svg)](https://plugins.jenkins.io/meliora-testlab)
+
 This plugin publishes the unit test results of a build to Meliora
 Testlab ALM/QA Tool. The plugin pushes the results to Testlab by
 creating a test run with Jenkins run unit tests mapped to Testlab's test
