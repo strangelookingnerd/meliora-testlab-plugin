@@ -559,14 +559,14 @@ Please, submit a support ticket via your Testlab and provide us
 
 We are happy to help!
 
+### License
+
+* [LGPL](./LICENSE)  
+
 ### Changelog
 
-* [Changelog](https://github.com/jenkinsci/meliora-testlab-plugin/blob/master/CHANGELOG.md)
+* [Changelog](./CHANGELOG.md)
 
 ### Known issues
 
 -   \-
-
-  
-
-  

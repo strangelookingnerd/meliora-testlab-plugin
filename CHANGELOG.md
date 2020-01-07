@@ -1,14 +1,16 @@
 Changelog
 ===
 
-### 1.18
+### 1.19
 
 Release date: 2020-01-07 
 
 -   [Meliora Testlab -
     Oscar Bug](https://www.melioratestlab.com/testlab-oscar-bug-release/)
     related changes
-    -   VCS support: Pass culprits and changeset information to Testlab
+-   VCS support: Pass culprits and changeset information to Testlab
+-   Migrated plugin documentation to GitHub
+-   (v1.18 skipped as internal release)
 
 ### 1.17
 
