@@ -1,5 +1,5 @@
 A Jenkins CI plugin to publish results of automated tests to [Meliora
-Testlab](https://www.melioratestlab.com){.external-link}.
+Testlab](https://www.melioratestlab.com).
 
 This plugin publishes the unit test results of a build to Meliora
 Testlab ALM/QA Tool. The plugin pushes the results to Testlab by
@@ -171,8 +171,7 @@ workbench found in "Test automation" view in Testlab.
 A typical configuration for this plugin in a free-style project job is
 seen in the picture below:
 
-![](docs/images/plugin-automaton.png){.confluence-embedded-image
-width="900"}
+![](docs/images/plugin-automaton.png)
 
 -   The job has some unit tests and is configured to publish the
     results - JUnit tests in this example.
@@ -253,7 +252,7 @@ If you are using Testlab from your own premises, you should
 ##### Pushing TAP results
 
 The plugin supports publishing the results from TAP ([Test Anything
-Protocol](https://testanything.org/tap-specification.html){.external-link})
+Protocol](https://testanything.org/tap-specification.html))
 files found in the build. If not checked, the possible TAP results
 produced by the job are ignored.
 
@@ -282,7 +281,7 @@ jobs will use the values from global configuration. 
 
 Most configuration fields of the plugin can be decorated with common
 [Jenkins set environmental
-variables](https://wiki.jenkins-ci.org/display/JENKINS/Building+a+software+project#Buildingasoftwareproject-JenkinsSetEnvironmentVariables){.external-link}.
+variables](https://wiki.jenkins-ci.org/display/JENKINS/Building+a+software+project#Buildingasoftwareproject-JenkinsSetEnvironmentVariables).
 These tags are replaced with values of matching environmental variables.
 Please see the above picture of the plugin configuration for the format
 of the actual tags.  
@@ -325,7 +324,7 @@ a parameter BROWSER indicating the web browser the automated test was
 run with, you can set an environmental variable BROWSER and configure
 the plugin to pass this parameter to Testlab. Setting environmental
 variables in Jenkins is easy with the [appropriate
-plugin](https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin){.external-link}.
+plugin](https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin).
 
 #### Using the plugin in a Pipeline script
 
@@ -447,8 +446,7 @@ must set up your proxy to pass these headers through.*
 A typical global configuration for the plugin is seen in the picture
 below. Please note, that the screenshot is for a configured On-premise
 installation:
-![](docs/images/jenkins_global_onpremise.png){.confluence-embedded-image
-.confluence-content-image-border}
+![](docs/images/jenkins_global_onpremise.png)
 
 #### My Jenkins is secured and uses authentication
 
@@ -509,7 +507,7 @@ on your dashboard widget and try again.
 Modern browsers block all traffic from secured host pages (pages served
 over HTTPS) to insecure addresses (HTTP). In this case, please [set up
 your Jenkins to use
-HTTPS/SSL](https://wiki.jenkins-ci.org/display/JENKINS/Starting+and+Accessing+Jenkins){.external-link}
+HTTPS/SSL](https://wiki.jenkins-ci.org/display/JENKINS/Starting+and+Accessing+Jenkins)
 and use a secured Jenkins URL instead. There might be browser specific
 switches or configuration to go around the problem, but going around the
 security restriction on your own browser is not really a solution. 
@@ -564,14 +562,14 @@ We are happy to help!
 ##### Version 1.18 (2020-01-07):
 
 -   [Meliora Testlab -
-    Oscar Bug](https://www.melioratestlab.com/testlab-oscar-bug-release/){.external-link}
+    Oscar Bug](https://www.melioratestlab.com/testlab-oscar-bug-release/)
     related changes
     -   VCS support: Pass culprits and changeset information to Testlab
 
 ##### Version 1.17 (2019-10-04):
 
 -   [Meliora Testlab -
-    Automaton](https://www.melioratestlab.com/testlab-automaton-release/){.external-link}
+    Automaton](https://www.melioratestlab.com/testlab-automaton-release/)
     related changes
     -   Add support for rulesets,
     -   automation sources and
@@ -589,7 +587,7 @@ We are happy to help!
 -   Try to remove unneeded class level dependency to TAP plugin when the
     feature is not really used
 -   [Fix security
-    issue](https://jenkins.io/security/advisory/2018-07-30/#SECURITY-847){.external-link}
+    issue](https://jenkins.io/security/advisory/2018-07-30/#SECURITY-847)
 
 ##### Version 1.14 (2017-04-24):
 
