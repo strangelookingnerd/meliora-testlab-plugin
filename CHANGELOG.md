@@ -1,6 +1,10 @@
 Changelog
 ===
 
+### 1.20
+
+-   Bug fix: Apply the source ruleset overrides correctly when the issue add strategy is not set
+
 ### 1.19
 
 Release date: 2020-01-07 

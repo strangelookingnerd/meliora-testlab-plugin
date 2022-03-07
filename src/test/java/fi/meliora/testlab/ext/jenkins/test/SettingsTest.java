@@ -145,7 +145,7 @@ public class SettingsTest extends TestBase {
         assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
-        assertSingleSelected(addIssueStrategyInput, "null");
+        assertSingleSelected(addIssueStrategyInput, "RULESET_DEFAULT");
         assertSingleSelected(reopenExistingInput, "null");
         assertEmpty(assignToUserInput);
         assertSingleSelected(robotCatenateParentKeywordsInput, "null");
@@ -215,7 +215,7 @@ public class SettingsTest extends TestBase {
         assertEmpty(milestoneInput);
         assertEmpty(testTargetTitleInput);
         assertEmpty(testEnvironmentTitleInput);
-        assertSingleSelected(addIssueStrategyInput, "null");
+        assertSingleSelected(addIssueStrategyInput, "RULESET_DEFAULT");
         assertSingleSelected(reopenExistingInput, "null");
         assertEmpty(assignToUserInput);
         assertSingleSelected(robotCatenateParentKeywordsInput, "null");

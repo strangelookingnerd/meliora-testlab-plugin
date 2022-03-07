@@ -25,7 +25,8 @@ public class TestResult extends ModelObject {
         DONOTADD,
         ADDPERTESTRUN,
         ADDPERTESTCASE,
-        ADDPERRESULT
+        ADDPERRESULT,
+        RULESET_DEFAULT //handle as null
     }
 
     @XmlElement

@@ -595,6 +595,10 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
             log.fine("RunWithSCM, sending changesets: " + changesets);
         }
 
+        AddIssueStrategy addIssueStrategy = rulesetSettings != null ? rulesetSettings.addIssueStrategy : null;
+        if(AddIssueStrategy.RULESET_DEFAULT.equals(addIssueStrategy))
+            addIssueStrategy = null;
+
         Sender.sendResults(
                 workspace,
                 runCompanyId,
@@ -610,7 +614,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
                 runTestEnvironmentTitle,
                 runTags,
                 runParameters,
-                rulesetSettings != null ? rulesetSettings.addIssueStrategy : null,
+                addIssueStrategy,
                 rulesetSettings != null ? rulesetSettings.reopenExisting : null,
                 !isBlank(runAssignToUser) ? runAssignToUser : null,
                 publishTap != null,
@@ -787,7 +791,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         @Restricted(NoExternalUse.class)
         public ListBoxModel doFillAddIssueStrategyItems() {
             ListBoxModel m = new ListBoxModel();
-            m.add("[Ruleset default]", "null");
+            m.add("[Ruleset default]", AddIssueStrategy.RULESET_DEFAULT.toString());
             m.add("Do not add issues", AddIssueStrategy.DONOTADD.toString());
             m.add("Add an issue per test run", AddIssueStrategy.ADDPERTESTRUN.toString());
             m.add("Add an issue per Testlab test case", AddIssueStrategy.ADDPERTESTCASE.toString());
@@ -869,7 +873,9 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         }
 
         private AddIssueStrategy addIssueStrategy;
-        public AddIssueStrategy getAddIssueStrategy() { return addIssueStrategy; }
+        public AddIssueStrategy getAddIssueStrategy() {
+            return addIssueStrategy;
+        }
         @DataBoundSetter
         public void setAddIssueStrategy(AddIssueStrategy addIssueStrategy) {
             this.addIssueStrategy = addIssueStrategy;
