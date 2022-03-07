@@ -1,7 +1,7 @@
 Changelog
 ===
 
-### 1.20
+### 1.21
 
 -   Bug fix: Apply the source ruleset overrides correctly when the issue add strategy is not set
 
