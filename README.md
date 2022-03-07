@@ -283,7 +283,7 @@ jobs will use the values from global configuration. 
 
 Most configuration fields of the plugin can be decorated with common
 [Jenkins set environmental
-variables](https://wiki.jenkins-ci.org/display/JENKINS/Building+a+software+project#Buildingasoftwareproject-JenkinsSetEnvironmentVariables).
+variables](https://wiki.jenkins.io/JENKINS/Building+a+software+project#Buildingasoftwareproject-JenkinsSetEnvironmentVariables).
 These tags are replaced with values of matching environmental variables.
 Please see the above picture of the plugin configuration for the format
 of the actual tags.  
@@ -326,7 +326,7 @@ a parameter BROWSER indicating the web browser the automated test was
 run with, you can set an environmental variable BROWSER and configure
 the plugin to pass this parameter to Testlab. Setting environmental
 variables in Jenkins is easy with the [appropriate
-plugin](https://wiki.jenkins-ci.org/display/JENKINS/EnvInject+Plugin).
+plugin](https://plugins.jenkins.io/envinject/).
 
 #### Using the plugin in a Pipeline script
 
@@ -509,7 +509,7 @@ on your dashboard widget and try again.
 Modern browsers block all traffic from secured host pages (pages served
 over HTTPS) to insecure addresses (HTTP). In this case, please [set up
 your Jenkins to use
-HTTPS/SSL](https://wiki.jenkins-ci.org/display/JENKINS/Starting+and+Accessing+Jenkins)
+HTTPS/SSL](https://wiki.jenkins.io/JENKINS/Starting+and+Accessing+Jenkins)
 and use a secured Jenkins URL instead. There might be browser specific
 switches or configuration to go around the problem, but going around the
 security restriction on your own browser is not really a solution. 
@@ -561,11 +561,11 @@ We are happy to help!
 
 ### License
 
-* [LGPL](./LICENSE)  
+* [LGPL](https://github.com/jenkinsci/meliora-testlab-plugin/blob/master/LICENSE)  
 
 ### Changelog
 
-* [Changelog](./CHANGELOG.md)
+* [Changelog](https://github.com/jenkinsci/meliora-testlab-plugin/blob/master/CHANGELOG.md)
 
 ### Known issues
 
