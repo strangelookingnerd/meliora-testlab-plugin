@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 1.22
+
+-   Security updates on dependencies
+-   Bump required jenkins core version
+
 ### 1.21
 
 -   Bug fix: Apply the source ruleset overrides correctly when the issue add strategy is not set

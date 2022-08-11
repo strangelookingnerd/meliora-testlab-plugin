@@ -35,7 +35,7 @@ public class SettingsTest extends TestBase {
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
         HtmlCheckBoxInput corsInput = form.getInputByName(FIELD_CORS);
         HtmlTextInput originsInput = form.getInputByName(FIELD_ORIGIN);
 
@@ -61,14 +61,14 @@ public class SettingsTest extends TestBase {
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlHiddenInput hiddenApiKeyInput = form.getInputByName(FIELD_APIKEY);
         corsInput = form.getInputByName(FIELD_CORS);
         originsInput = form.getInputByName(FIELD_ORIGIN);
 
         assertHasValue(companyIdInput, "unittestcompany");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertPassword(apiKeyInput, "1010101010202020");
+        assertPassword(hiddenApiKeyInput, "1010101010202020");
         assertChecked(corsInput, true);
         assertHasValue(originsInput, "http://somehost, http://anotherhost");
     }
@@ -122,7 +122,7 @@ public class SettingsTest extends TestBase {
         HtmlTextInput companyIdInput = form.getInputByName(FIELD_COMPANYID);
         HtmlCheckBoxInput usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         HtmlTextInput onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        HtmlPasswordInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlTextInput apiKeyInput = form.getInputByName(FIELD_APIKEY);
 
         HtmlTextArea commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         HtmlTextInput tagsInput = form.getInputByName(FIELD_TAGS);
@@ -353,7 +353,7 @@ public class SettingsTest extends TestBase {
         companyIdInput = form.getInputByName(FIELD_COMPANYID);
         usingonpremiseInput = form.getInputByName(FIELD_USINGONPREMISE);
         onpremiseurlInput = form.getInputByName(FIELD_ONPREMISEURL);
-        apiKeyInput = form.getInputByName(FIELD_APIKEY);
+        HtmlHiddenInput hiddenApiKeyInput = form.getInputByName(FIELD_APIKEY);
         commentInput = form.getTextAreaByName(FIELD_DESCRIPTION);
         tagsInput = form.getInputByName(FIELD_TAGS);
         parametersInput = form.getInputByName(FIELD_PARAMETERS);
@@ -398,7 +398,7 @@ public class SettingsTest extends TestBase {
         assertHasValue(companyIdInput, "unittestcompanyjob");
         assertChecked(usingonpremiseInput, true);
         assertHasValue(onpremiseurlInput, "https://unittesthost:8080");
-        assertPassword(apiKeyInput, "1010101010303030");
+        assertPassword(hiddenApiKeyInput, "1010101010303030");
     }
 
 }

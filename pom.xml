@@ -1,9 +1,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
+        <!-- see https://github.com/jenkinsci/plugin-pom -->
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>3.42</version>
+        <version>4.46</version>
     </parent>
 
     <artifactId>meliora-testlab</artifactId>
@@ -40,8 +41,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <findbugs.failOnError>false</findbugs.failOnError>
-        <jenkins.version>2.138.4</jenkins.version>
-        <jenkins-test-harness.version>2.49</jenkins-test-harness.version>
+        <jenkins.version>2.289.1</jenkins.version>
         <java.level>8</java.level>
     </properties>
 
@@ -91,7 +91,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>junit</artifactId>
-            <version>1.20</version>
+            <version>1.47</version>
         </dependency>
         <dependency>
             <groupId>org.tap4j</groupId>
@@ -99,67 +99,83 @@
             <version>2.2.1</version>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>git</artifactId>
-            <version>4.0.0</version>
+            <version>4.11.4</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>mercurial</artifactId>
-            <version>2.3</version>
+            <version>2.16.1</version>
             <optional>true</optional>
         </dependency>
+
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>2.6</version>
+            <version>2.7</version>
             <scope>test</scope>
         </dependency>
+
         <!-- Require upper bound dependencies error for ... -->
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>matrix-project</artifactId>
-            <version>1.14</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>structs</artifactId>
             <version>1.20</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>structs</artifactId>
+            <version>308.v852b473a2b8c</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-step-api</artifactId>
+            <version>622.vb_8e7c15b_c95a_</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jenkins-ci.plugins.workflow</groupId>
+            <artifactId>workflow-api</artifactId>
+            <version>2.40</version>
+            <scope>test</scope>
+        </dependency>
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
             <artifactId>script-security</artifactId>
-            <version>1.54</version>
+            <version>1131.v8b_b_5eda_c328e</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
-            <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>mailer</artifactId>
-            <version>1.23</version>
-            <scope>test</scope>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>annotations</artifactId>
+            <version>3.0.0</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
             <version>3.7</version>
             <scope>test</scope>
         </dependency>
+
         <dependency>
             <groupId>org.jenkins-ci.plugins</groupId>
-            <artifactId>jsch</artifactId>
-            <version>0.1.55.1</version>
-            <scope>test</scope>
+            <artifactId>display-url-api</artifactId>
+            <version>2.3.5</version>
         </dependency>
-        <dependency>
-            <groupId>org.jenkins-ci</groupId>
-            <artifactId>symbol-annotation</artifactId>
-            <version>1.20</version>
-            <!--            <scope>test</scope>-->
-        </dependency>
+
         <!-- /Require upper bound dependencies error for ... -->
     </dependencies>
 

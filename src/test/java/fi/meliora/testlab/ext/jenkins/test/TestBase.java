@@ -113,7 +113,7 @@ public class TestBase {
      * @param input
      * @param plainText
      */
-    protected void assertPassword(HtmlPasswordInput input, String plainText) {
+    protected void assertPassword(HtmlInput input, String plainText) {
         String decrypted = null;
         Secret secret = Secret.decrypt(input.getValueAttribute());
         if(secret != null)
