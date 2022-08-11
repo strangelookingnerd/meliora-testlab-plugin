@@ -40,7 +40,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <findbugs.failOnError>false</findbugs.failOnError>
+        <spotbugs.failOnError>false</spotbugs.failOnError>
         <jenkins.version>2.289.1</jenkins.version>
         <java.level>8</java.level>
     </properties>

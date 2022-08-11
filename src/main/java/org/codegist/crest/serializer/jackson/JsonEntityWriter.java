@@ -29,7 +29,7 @@ import java.util.List;
 public class JsonEntityWriter implements EntityWriter {
     private static final Logger log = LoggerFactory.getLogger(JsonEntityWriter.class);
 
-    public class JsonEncodedFormJacksonSerializer implements
+    public static class JsonEncodedFormJacksonSerializer implements
             Serializer<List<Param>> {
 
         private final ObjectMapper jackson;
