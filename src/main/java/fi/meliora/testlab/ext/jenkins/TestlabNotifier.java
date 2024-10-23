@@ -19,7 +19,7 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import javax.servlet.ServletException;
 import java.io.IOException;
 import java.util.*;
@@ -380,38 +380,11 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         return BuildStepMonitor.NONE;
     }
 
-    /**
-     * SimpleBuildStep perform().
-     *
-     * @param run a build this is running as a part of
-     * @param workspace a workspace to use for any file operations
-     * @param launcher a way to start processes
-     * @param listener a place to send output
-     * @throws InterruptedException if the step is interrupted
-     * @throws IOException if something goes wrong; use AbortException for a polite error
-     */
     @Override
-    public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
+    public void perform(@NonNull Run<?, ?> run, @NonNull FilePath workspace, @NonNull EnvVars env, @NonNull Launcher launcher, @NonNull TaskListener listener) throws InterruptedException, IOException {
         doPerform(run, workspace, listener);
     }
 
-    /**
-     * Runs the step over the given build and reports the progress to the listener.
-     *
-     * A plugin can contribute the action object to Actionable.getActions() so that a 'report'
-     * becomes a part of the persisted data of Build. This is how JUnit plugin attaches the
-     * test report to a build page, for example.
-     *
-     * Using the return value to indicate success/failure should be considered deprecated,
-     * and implementations are encouraged to throw AbortException to indicate a failure.
-     *
-     * @param build
-     * @param launcher
-     * @param listener
-     * @return boolean deprecated
-     * @throws InterruptedException
-     * @throws IOException
-     */
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
         return doPerform(build, build.getWorkspace(), listener);
@@ -654,27 +627,12 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         // defines CORS settings for calls from Testlab -> Jenkins API
         public Cors cors;
 
-        /* pre-ruleset configuration, see readResolve */
-        // custom field name to map the test ids against with
-        private transient String testCaseMappingField;
-        /* /pre-ruleset configuration, see readResolve */
-
         private CORSFilter CORSFilter;
 
         public DescriptorImpl() {
             load();
 
             log.fine("load: " + companyId + ", api key hidden, " + usingonpremise + ", " + usingonpremise + ", " + cors);
-
-            if(!isBlank(testCaseMappingField)) {
-                log.warning(
-                        "Meliora Testlab Plugin: In plugin settings, you have 'Test case mapping field' set" +
-                        " as '" + testCaseMappingField + "'. This field is deprecated and should be set to each job's" +
-                        " ruleset rules at Testlab side. See the plugin documentation on" +
-                        " changes related to the introduction of ruleset-concept in Testlab. As deprecated, this value" +
-                        " _will be ignored_."
-                );
-            }
 
             // let's inject our CORSFilter as we're at it
             try {
@@ -690,7 +648,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         }
 
         /**
-         * This human readable name is used in the configuration screen.
+         * This human-readable name is used in the configuration screen.
          */
         @Override
         public String getDisplayName() {
@@ -1252,7 +1210,7 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         @DataBoundConstructor
         public PublishRobot(String robotOutput, Boolean robotCatenateParentKeywords) {
             this.robotOutput = robotOutput;
-            this.robotCatenateParentKeywords = robotCatenateParentKeywords == null ? true : robotCatenateParentKeywords;
+            this.robotCatenateParentKeywords = robotCatenateParentKeywords == null ? Boolean.TRUE : robotCatenateParentKeywords;
         }
 
         @Override

@@ -26,7 +26,7 @@ public class VariableReplacer {
             if(vars.length == 1) {
                 this.vars = vars[0];
             } else {
-                this.vars = new HashMap<String, String>();
+                this.vars = new HashMap<>();
                 for(Map<String, String> v : vars) {
                     this.vars.putAll(v);
                 }
@@ -42,12 +42,13 @@ public class VariableReplacer {
      * @return String with variables replaced
      */
     public String replace(String src) {
-        if(vars == null || src == null || src.length() == 0)
+        if(vars == null || src == null || src.isEmpty())
             return src;
 
         String result = src;
-        for(String key : vars.keySet()) {
-            String value = vars.get(key);
+        for(Map.Entry<String, String> e : vars.entrySet()) {
+            String key = e.getKey();
+            String value = e.getValue();
             String tag = "\\$\\{" + key + "\\}";
             result = result.replaceAll(tag, value);
         }

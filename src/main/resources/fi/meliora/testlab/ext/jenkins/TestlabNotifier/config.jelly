@@ -23,7 +23,7 @@
 
     <f:optionalBlock field="rulesetSettings" title="Override ruleset settings"
                      checked="${not empty instance.rulesetSettings}"
-                     help="/plugin/meliora-testlab/help-source.html">
+                     help="/plugin/meliora-testlab/help-sourceSettings.html">
         <j:set var="instance" value="${instance.rulesetSettings}"/>
 
         <f:block>

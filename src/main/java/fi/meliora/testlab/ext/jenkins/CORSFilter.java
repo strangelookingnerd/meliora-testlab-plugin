@@ -4,6 +4,8 @@ import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -61,7 +63,7 @@ public class CORSFilter implements Filter {
                         //
                         if(origins.contains("*") || origins.contains(origin)) {
                             log.finest("doFilter: CORSFilter adding headers.");
-                            resp.addHeader("Access-Control-Allow-Origin", origin);
+                            resp.addHeader("Access-Control-Allow-Origin", URLEncoder.encode(origin, StandardCharsets.UTF_8.name()));
                             resp.addHeader("Access-Control-Allow-Methods", CORS_METHODS);
                             resp.addHeader("Access-Control-Allow-Headers", CORS_HEADERS);
                             resp.addHeader("Access-Control-Allow-Credentials", CORS_CREDENTIALS);

@@ -15,6 +15,7 @@ import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.AggregatedTestResultAction;
 import hudson.tasks.test.TestResult;
 import jenkins.MasterToSlaveFileCallable;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.tools.ant.DirectoryScanner;
@@ -29,6 +30,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.URLDecoder;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +140,7 @@ public class Sender {
             }
         }
 
-        if(ras.size() == 0 && (publishRobot && robotXml == null)) {
+        if(ras.isEmpty() && (publishRobot && robotXml == null)) {
             log.warning("We have no results to publish. Please make sure your job is configured to publish some test results to make them available to this plugin.");
         } else {
             String user = "Jenkins job: " + build.getParent().getDisplayName();
@@ -160,15 +162,15 @@ public class Sender {
             data.setCulprits(culprits);
             data.setChangesets(changesets);
 
-            if(parameters != null && parameters.size() > 0) {
+            if(parameters != null && !parameters.isEmpty()) {
                 List<KeyValuePair> parameterValues = new ArrayList<KeyValuePair>();
-                for(String name : parameters.keySet()) {
+                for(Map.Entry<String, String> entry : parameters.entrySet()) {
                     KeyValuePair kvp = new KeyValuePair();
-                    kvp.setKey(name);
-                    kvp.setValue(parameters.get(name));
+                    kvp.setKey(entry.getKey());
+                    kvp.setValue(entry.getValue());
                     parameterValues.add(kvp);
                     if(log.isLoggable(Level.FINE))
-                        log.fine("Sending test case parameter " + name + " with value " + kvp.getValue());
+                        log.fine("Sending test case parameter " + entry.getKey() + " with value " + kvp.getValue());
                 }
                 data.setParameters(parameterValues);
             }
@@ -197,7 +199,7 @@ public class Sender {
                         log.fine("Could not resolve TapTestResultAction result: " + e.getMessage());
                     }
                 } else if(ra instanceof AbstractTestResultAction) {
-                    resultObject = ((AbstractTestResultAction)ra).getResult();
+                    resultObject = ((AbstractTestResultAction<?>)ra).getResult();
                 }
                 if(resultObject != null) {
                     if (resultObject instanceof List) {
@@ -216,7 +218,7 @@ public class Sender {
                 }
             }
 
-            if (results.size() > 0) {
+            if (!results.isEmpty()) {
                 if (log.isLoggable(Level.FINE))
                     log.fine("Sending " + results.size() + " test results to Testlab.");
                 data.setResults(results);
@@ -405,7 +407,7 @@ public class Sender {
 
                             List<TestCaseResultStep> steps = testCaseResult.getSteps();
                             if(steps == null) {
-                                steps = new ArrayList<TestCaseResultStep>();
+                                steps = new ArrayList<>();
                                 testCaseResult.setSteps(steps);
                             }
                             steps.add(testCaseResultStep);
@@ -509,18 +511,11 @@ public class Sender {
                     throw new AbortException("Robot Output path " + robotOutput + " matches more than one file. Pattern must be more exact. Aborting.");
                 }
                 File outputXml = new File(ds.getBasedir(), files[0]);
-                FileReader r = null;
-                try {
-                    r = new FileReader(outputXml);
-                    byte[] bytes = IOUtils.toByteArray(r);
-                    String encoding = detectXmlEncoding(bytes);
-                    if(encoding == null)
-                        encoding = "UTF-8";
-                    return new String(bytes, encoding);
-                } finally {
-                    if(r != null)
-                        try { r.close(); } catch (Exception e) {}
-                }
+                byte[] bytes = FileUtils.readFileToByteArray(outputXml);
+                String encoding = detectXmlEncoding(bytes);
+                if(encoding == null)
+                    encoding = "UTF-8";
+                return new String(bytes, encoding);
             }
             return null;
         }

@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 1.23
+                                                 
+-   Security updates on dependencies
+-   Bump required jenkins core version to 2.452.4
+
 ### 1.22
 
 -   Security updates on dependencies
