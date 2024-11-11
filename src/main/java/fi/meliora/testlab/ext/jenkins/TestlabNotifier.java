@@ -2,6 +2,8 @@ package fi.meliora.testlab.ext.jenkins;
 
 import fi.meliora.testlab.ext.rest.model.Changeset;
 import hudson.*;
+import hudson.init.InitMilestone;
+import hudson.init.Initializer;
 import hudson.model.*;
 import hudson.scm.ChangeLogSet;
 import hudson.tasks.*;
@@ -627,24 +629,26 @@ public class TestlabNotifier extends Notifier implements SimpleBuildStep {
         // defines CORS settings for calls from Testlab -> Jenkins API
         public Cors cors;
 
-        private CORSFilter CORSFilter;
+        private static CORSFilter CORSFilter;
 
         public DescriptorImpl() {
             load();
 
             log.fine("load: " + companyId + ", api key hidden, " + usingonpremise + ", " + usingonpremise + ", " + cors);
 
-            // let's inject our CORSFilter as we're at it
+            CORSFilter = new CORSFilter();
+            configureCORS();
+        }
+
+        @Initializer(after = InitMilestone.SYSTEM_CONFIG_ADAPTED)
+        public static void startCORS() {
             try {
-                CORSFilter = new CORSFilter();
                 PluginServletFilter.addFilter(CORSFilter);
                 log.info("CORSFilter injected.");
             } catch (ServletException se) {
                 log.warning("Could not inject CORSFilter.");
                 se.printStackTrace();
             }
-
-            configureCORS();
         }
 
         /**

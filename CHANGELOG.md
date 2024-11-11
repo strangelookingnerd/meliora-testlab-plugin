@@ -1,6 +1,11 @@
 Changelog
 ===
 
+### 1.24
+
+-   Updates on dependencies
+-   Fix: Start CORS filter with plugin Initializer
+
 ### 1.23
                                                  
 -   Security updates on dependencies
